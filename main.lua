@@ -926,6 +926,14 @@ function Card:calculate_joker(context)
                 }
             }
         end
+        if self.ability.legallysteel then
+            return {
+                xmult = 1.5,
+                colour = G.C.MULT,
+                card = self,
+                message_card = self
+            }
+        end
         if self.ability.legallyglass then
             return {
                 xmult = 2,
@@ -950,14 +958,6 @@ function Card:calculate_joker(context)
         end
     end
     if context.joker_main and context.cardarea == G.jokers then
-        if self.ability.legallysteel then
-            return {
-                xmult = 1.5,
-                colour = G.C.MULT,
-                card = self,
-                message_card = self
-            }
-        end
         if not true then
             if self.ability.legallymult then
                 return {
