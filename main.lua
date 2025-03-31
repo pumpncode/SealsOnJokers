@@ -106,12 +106,22 @@ SMODS.Consumable{
                 eligible[#eligible + 1] = v
             end
         end
+        for k, v in pairs(G.consumeables.cards) do
+            if not v.seal then
+                eligible[#eligible + 1] = v
+            end
+        end
         return #eligible > 0 and true or false
     end,
     use = function(self,card,area,copier)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
             if not v.seal then
+                eligible[#eligible + 1] = v
+            end
+        end
+        for k, v in pairs(G.consumeables.cards) do
+            if not v.seal and not v == card then
                 eligible[#eligible + 1] = v
             end
         end
@@ -370,7 +380,7 @@ end
 local oldcalcseal = Card.calculate_seal
 function Card:calculate_seal(context)
     if self.debuff then return nil end
-    if self.ability and self.ability.set == 'Joker' then
+    if self.ability and (self.ability.set == 'Joker' or self.ability.set == 'Tarot') then
         if context.retrigger_joker_check and not context.retrigger_joker and self == context.other_card and self.seal == "Red" then
             return {
                 repetitions = 1,
@@ -481,6 +491,21 @@ function Card:calculate_seal(context)
             end
         end
     end
-    if self.ability.set == 'Joker' then return nil end
+    if self.ability.set == 'Joker' or self.ability.set == 'Tarot' or self.ability.set == 'Planet' or self.ability.set == 'Spectral' then return nil end
     return oldcalcseal(self, context)
 end
+
+SMODS.Joker:take_ownership('j_mail',
+    {
+        calculate = function(self, card, context)
+            if context.discard and not context.other_card.debuff and ((context.other_card:get_id() == G.GAME.current_round.mail_card.id) or next(find_joker("GodJoker"))) then
+                return {
+                    dollars = card.ability.extra,
+                    colour = G.C.MONEY,
+                    card = card
+                }
+            end
+        end
+    },
+    true
+)
