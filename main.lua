@@ -958,7 +958,7 @@ function Card:calculate_joker(context)
                 message_card = self
             }
         end
-        if not self.ability.triggered then
+        if not true then
             if self.ability.legallymult then
                 return {
                     mult = 4,
