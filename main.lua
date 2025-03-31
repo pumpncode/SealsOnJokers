@@ -887,7 +887,7 @@ function Card:calculate_joker(context)
     if context.before then
         self.ability.triggered = false
     end
-    if context.post_trigger and context.other_card == self then
+    if context.post_trigger and context.other_card == self and (context.other_context.joker_main or context.other_context.individual) then
         self.ability.triggered = true
         if self.ability.legallymult then
             return {
