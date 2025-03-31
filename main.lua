@@ -498,7 +498,7 @@ end
 SMODS.Joker:take_ownership('j_mail',
     {
         calculate = function(self, card, context)
-            if context.discard and not context.other_card.debuff and ((context.other_card:get_id() == G.GAME.current_round.mail_card.id) or next(find_joker("GodJoker"))) then
+            if context.discard and not context.other_card.debuff and ((context.other_card:get_id() == G.GAME.current_round.mail_card.id)) then
                 return {
                     dollars = card.ability.extra,
                     colour = G.C.MONEY,
