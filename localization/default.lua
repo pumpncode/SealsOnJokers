@@ -54,6 +54,13 @@ return {
 					"{C:red}destroy{} this Joker",
 				},
 			},
+            legallygold = {
+                name="Gold Card",
+                text={
+                    "{C:money}$#1#{} at",
+                    "end of round",
+                },
+            },
         },
         Planet={},
         Spectral={},
