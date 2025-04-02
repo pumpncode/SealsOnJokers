@@ -1,0 +1,17 @@
+[manifest]
+version = "1.0.0"
+dump_lua = true
+priority = -1
+
+[[patches]]
+[patches.pattern]
+target = "card.lua"
+pattern = "G.hand:unhighlight_all()"
+position = "at"
+payload = '''
+if not self.seal and self.seal == "Red" then
+    G.hand:unhighlight_all()
+end
+'''
+match_indent = true
+times = 1

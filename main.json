@@ -1,14 +1,14 @@
 {
-	"id": "SealsOnJokers",
-	"name": "Seals On Jokers",
+	"id": "SealsOnEverything",
+	"name": "Seals On Everything",
 	"author": ["Somethingcom515"],
-	"description": "Allows seals on joker also comes with 4 spectrals",
-	"prefix": "soj",
+	"description": "Allows seals on Everything also comes with 4 spectrals",
+	"prefix": "soe",
 	"main_file": "main.lua",
 	"priority": 200,
 	"badge_colour": "E8463D",
 	"badge_text_colour": "FFFFFF",
-	"display_name": "Seals On Jokers",
-	"version": "1.0.0",
+	"display_name": "Seals On Everything",
+	"version": "1.2.0",
 	"dependencies": []
 }

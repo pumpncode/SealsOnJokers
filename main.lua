@@ -753,12 +753,145 @@ SMODS.Consumable{
     end
 }
 
+SMODS.Consumable{
+    key = 'eternal?',
+    set = 'Spectral',
+    atlas = 'What',
+    pos = {x = 0, y = 0},
+    loc_txt = {
+        name = 'Eternal?',
+        text = {
+            'Add {C:attention}Eternal{}',
+            'to a random card in hand',
+        }
+    },
+    unlocked = true,
+    discovered = true,
+    can_use = function(self,card)
+        local eligible = {}
+        for k, v in pairs(G.hand.cards) do
+            if not v.ability.eternal then
+                eligible[#eligible + 1] = v
+            end
+        end
+        return #eligible > 0 and true or false
+    end,
+    use = function(self,card,area,copier)
+        local eligible = {}
+        for k, v in pairs(G.hand.cards) do
+            if not v.ability.eternal then
+                eligible[#eligible + 1] = v
+            end
+        end
+        local highlighted = pseudorandom_element(eligible, pseudoseed('eternal'))
+        if highlighted then
+            G.E_MANAGER:add_event(Event({
+                func = function()
+                    play_sound("tarot1")
+                    highlighted:juice_up(0.3, 0.5)
+                    return true
+                end,
+            }))
+            G.E_MANAGER:add_event(Event({
+                trigger = "after",
+                delay = 0.1,
+                func = function()
+                    if highlighted then
+                        highlighted.ability.eternal = true
+                    end
+                    return true
+                end,
+            }))
+        end
+    end
+}
+
+SMODS.Consumable{
+    key = 'dejavu??',
+    set = 'Spectral',
+    atlas = 'What',
+    pos = {x = 0, y = 0},
+    loc_txt = {
+        name = 'Deja Vu??',
+        text = {
+            'Add a {C:red}Red Seal{}',
+            'to a random consumable',
+        }
+    },
+    config = {mod_conv = "Red", cards = 1},
+    loc_vars = function(self,info_queue,center)
+        info_queue[#info_queue+1] = { key = "red_seal_joker", set = "Other"}
+    end,
+    unlocked = true,
+    discovered = true,
+    can_use = function(self,card)
+        local eligible = {}
+        for k, v in pairs(G.consumeables.cards) do
+            if not v.seal and v ~= card then
+                eligible[#eligible + 1] = v
+            end
+        end
+        return #eligible > 0 and true or false
+    end,
+    use = function(self,card,area,copier)
+        local eligible = {}
+        for k, v in pairs(G.consumeables.cards) do
+            if not v.seal and v ~= card then
+                eligible[#eligible + 1] = v
+            end
+        end
+        local highlighted = pseudorandom_element(eligible, pseudoseed('dejavu'))
+        if highlighted then
+            G.E_MANAGER:add_event(Event({
+                func = function()
+                    play_sound("tarot1")
+                    highlighted:juice_up(0.3, 0.5)
+                    return true
+                end,
+            }))
+            G.E_MANAGER:add_event(Event({
+                trigger = "after",
+                delay = 0.1,
+                func = function()
+                    if highlighted then
+                        highlighted:set_seal("Red")
+                    end
+                    return true
+                end,
+            }))
+        end
+    end
+}
+
+local oldstartdissolve = Card.start_dissolve
+function Card:start_dissolve(dissolve_colours, silent, dissolve_time_fac, no_juice)
+    if self.ability and self.ability.eternal and self.ability.set ~= 'Joker' then return nil end
+    return oldstartdissolve(self, dissolve_colours, silent, dissolve_time_fac, no_juice)
+end
+
+local oldshatter = Card.shatter
+function Card:shatter()
+    self.shattered = false
+    self.dissolve = 0
+    if self.ability and self.ability.eternal then return nil end
+    return oldshatter(self)
+end
+
+local oldisface = Card.is_face
+function Card:is_face()
+    if SMODS.has_enhancement(self, 'm_prefix_facecard') then 
+        return true
+    end
+    return oldisface(self)
+end
+
 local oldcalcseal = Card.calculate_seal
 function Card:calculate_seal(context)
     if self.debuff then return nil end
-    if self.ability and (self.ability.set == 'Joker' or self.ability.set == 'Tarot') then
+    if self.ability and self.ability.set == 'Joker' then
         if context.retrigger_joker_check and not context.retrigger_joker and self == context.other_card and self.seal == "Red" then
             return {
+                message = localize("k_again_ex"),
                 repetitions = 1,
                 card = self
             }
@@ -786,7 +919,7 @@ function Card:calculate_seal(context)
                 end)}))
             card_eval_status_text(self, 'extra', nil, nil, nil, {message = localize('k_plus_planet'), colour = G.C.SECONDARY_SET.Planet})
         end
-        if self.seal == 'Purple' and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit and context.selling_self then
+        if self.seal == 'Purple' and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
             G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
             G.E_MANAGER:add_event(Event({
                 trigger = 'before',
@@ -867,8 +1000,101 @@ function Card:calculate_seal(context)
             end
         end
     end
-    if self.ability.set == 'Joker' or self.ability.set == 'Tarot' or self.ability.set == 'Planet' or self.ability.set == 'Spectral' then return nil end
+    if self.ability.set == 'Joker' then return nil end
     return oldcalcseal(self, context)
+end
+
+local oldunhighlightall = CardArea.unhighlight_all
+function CardArea:unhighlight_all()
+    if self == G.hand and G.GAME.modifiers.isred then return nil end
+    return oldunhighlightall(self)
+end
+
+local olduseconsume = Card.use_consumeable
+function Card:use_consumeable(area, copier)
+    if self.seal == 'Red' then
+        G.GAME.modifiers.isred = true
+    else
+        G.GAME.modifiers.isred = false
+    end
+    local g = olduseconsume(self, area, copier)
+    local used_tarot = copier or self
+    if self.seal then
+        if self.seal == 'Gold' then
+            G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.4, func = function()
+                used_tarot:juice_up(0.3, 0.5)
+                ease_dollars(3)
+                card_eval_status_text(self, 'extra', nil, nil, nil, {message = "$3", colour = G.C.MONEY})
+                return true end 
+            }))
+        end
+        if self.seal == 'Red' then
+            card_eval_status_text(self, 'extra', nil, nil, nil, {message = localize('k_again_ex')})
+            if self.ability.name == 'The Emperor' or self.ability.name == 'The High Priestess' then
+                for i = 1, math.min((self.ability.consumeable.tarots or self.ability.consumeable.planets), G.consumeables.config.card_limit - #G.consumeables.cards) do
+                    G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.4, func = function()
+                        if G.consumeables.config.card_limit > #G.consumeables.cards then
+                            play_sound('timpani')
+                            local card = create_card((self.ability.name == 'The Emperor' and 'Tarot') or (self.ability.name == 'The High Priestess' and 'Planet'), G.consumeables, nil, nil, nil, nil, nil, (self.ability.name == 'The Emperor' and 'emp') or (self.ability.name == 'The High Priestess' and 'pri'))
+                            card:add_to_deck()
+                            G.consumeables:emplace(card)
+                            used_tarot:juice_up(0.3, 0.5)
+                        end
+                        return true end }))
+                end
+            end
+            G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.4, func = function()
+                play_sound('tarot1')
+                used_tarot:juice_up(0.3, 0.5)
+                return true end }))
+            for i=1, #G.hand.highlighted do
+                local percent = 1.15 - (i-0.999)/(#G.hand.highlighted-0.998)*0.3
+                G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.15,func = function() G.hand.highlighted[i]:flip();play_sound('card1', percent);G.hand.highlighted[i]:juice_up(0.3, 0.3);return true end }))
+            end
+            if self.ability.name == 'Strength' then
+                for i=1, #G.hand.highlighted do
+                    G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.1,func = function()
+                        local card = G.hand.highlighted[i]
+                        local suit_prefix = string.sub(card.base.suit, 1, 1)..'_'
+                        local rank_suffix = card.base.id == 14 and 2 or math.min(card.base.id+1, 14)
+                        if rank_suffix < 10 then rank_suffix = tostring(rank_suffix)
+                        elseif rank_suffix == 10 then rank_suffix = 'T'
+                        elseif rank_suffix == 11 then rank_suffix = 'J'
+                        elseif rank_suffix == 12 then rank_suffix = 'Q'
+                        elseif rank_suffix == 13 then rank_suffix = 'K'
+                        elseif rank_suffix == 14 then rank_suffix = 'A'
+                        end
+                        card:set_base(G.P_CARDS[suit_prefix..rank_suffix])
+                    return true end }))
+                end  
+            end
+            for i=1, #G.hand.highlighted do
+                local percent = 0.85 + (i-0.999)/(#G.hand.highlighted-0.998)*0.3
+                G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.15,func = function() G.hand.highlighted[i]:flip();play_sound('tarot2', percent, 0.6);G.hand.highlighted[i]:juice_up(0.3, 0.3);return true end }))
+            end
+            -- after this stays at the end
+            G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.2,func = function()
+                G.GAME.modifiers.isred = false
+                G.hand:unhighlight_all(); return true
+            end }))
+        end
+    end
+    return g
+end
+
+local oldopen = Card.open
+function Card:open()
+    if self.ability.set == 'Booster' and self.seal then
+        if self.seal == 'Gold' then
+            G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.4, func = function()
+                self:juice_up(0.3, 0.5)
+                ease_dollars(3)
+                card_eval_status_text(self, 'extra', nil, nil, nil, {message = "$3", colour = G.C.MONEY})
+                return true end 
+            }))
+        end
+    end
+    return oldopen(self)
 end
 
 local oldcalcjoker = Card.calculate_joker
@@ -1006,6 +1232,47 @@ function Card:calculate_joker(context)
             end
         end
     end
+    if self.ability and (self.ability.set == 'Tarot' or self.ability.set == 'Spectral' or self.ability.set == 'Voucher' or self.ability.set == 'Planet  ') and self.seal then
+        if self.seal == 'Blue' and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit and context.end_of_round and context.cardarea == G.consumeables then
+            local card_type = 'Planet'
+            G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+            G.E_MANAGER:add_event(Event({
+                trigger = 'before',
+                delay = 0.0,
+                func = (function()
+                    if G.GAME.last_hand_played then
+                        local _planet = 0
+                        for k, v in pairs(G.P_CENTER_POOLS.Planet) do
+                            if v.config.hand_type == G.GAME.last_hand_played then
+                                _planet = v.key
+                            end
+                        end
+                        local card = create_card(card_type,G.consumeables, nil, nil, nil, nil, _planet, 'blusl')
+                        card:add_to_deck()
+                        G.consumeables:emplace(card)
+                        G.GAME.consumeable_buffer = 0
+                    end
+                    return true
+                end)}))
+            card_eval_status_text(self, 'extra', nil, nil, nil, {message = localize('k_plus_planet'), colour = G.C.SECONDARY_SET.Planet})
+        end
+        if self.seal == 'Purple' and context.selling_self then
+            G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+            if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+                G.E_MANAGER:add_event(Event({
+                    trigger = 'before',
+                    delay = 0.0,
+                    func = (function()
+                            local card = create_card('Tarot',G.consumeables, nil, nil, nil, nil, nil, '8ba')
+                            card:add_to_deck()
+                            G.consumeables:emplace(card)
+                            G.GAME.consumeable_buffer = 0
+                        return true
+                    end)}))
+                card_eval_status_text(self, 'extra', nil, nil, nil, {message = localize('k_plus_tarot'), colour = G.C.PURPLE})
+            end
+        end
+    end
     return g
 end
 
@@ -1042,6 +1309,9 @@ SMODS.Joker{
                 card = card
             }
         end
+    end,
+    in_pool = function(self)
+        return false
     end
 }
 
@@ -1059,6 +1329,93 @@ SMODS.Joker:take_ownership('j_mail',
     },
     true
 )
+
+SMODS.DrawStep{
+    key = 'consumeableseal',
+    order = 10,
+    func = function(self)
+        if (self.ability.set ~= 'Joker' and (self.ability.set ~= 'Default' and self.ability.set ~= 'Enhanced')) and self.seal then
+            G.shared_seals[self.seal].role.draw_major = self
+            G.shared_seals[self.seal]:draw_shader('dissolve', nil, nil, nil, self.children.center)
+            if self.seal == 'Gold' then G.shared_seals[self.seal]:draw_shader('voucher', nil, self.ARGS.send_to_shader, nil, self.children.center) end
+        end
+    end
+}
+
+SMODS.Atlas{
+    key = 'Blinds',
+    path = 'Blinds.png',
+    atlas_table = 'ANIMATION_ATLAS',
+    frames = 21,
+    px = 34,
+    py = 34
+}
+
+SMODS.Blind{
+    key = 'theseal',
+    loc_txt = {
+        name = 'The Seal',
+        text = {
+            'Cards without seals are debuffed',
+        }
+    },
+    atlas = 'Blinds',
+    discovered = true,
+    pos = {x = 0, y = 0},
+    boss = {min = 1, max = 10, showdown = true},
+    boss_colour = HEX('E8463D'),
+    set_blind = function(self)
+        for i, v in ipairs(G.playing_cards) do
+            if not v.seal then
+                SMODS.debuff_card(v, true, 'redseal1'..tostring(i))
+            end
+        end
+        for i, v in ipairs(G.jokers.cards) do
+            if not v.seal then
+                SMODS.debuff_card(v, true,'redseal2'..tostring(i))
+            end
+        end
+        for i, v in ipairs(G.consumeables.cards) do
+            if not v.seal then
+                SMODS.debuff_card(v, true,'redseal3'..tostring(i))
+            end
+        end
+    end,
+    disable = function(self)
+        for i, v in ipairs(G.playing_cards) do
+            if not v.seal then
+                SMODS.debuff_card(v, false, 'redseal1'..tostring(i))
+            end
+        end
+        for i, v in ipairs(G.jokers.cards) do
+            if not v.seal then
+                SMODS.debuff_card(v, false, 'redseal2'..tostring(i))
+            end
+        end
+        for i, v in ipairs(G.consumeables.cards) do
+            if not v.seal then
+                SMODS.debuff_card(v, false, 'redseal3'..tostring(i))
+            end
+        end
+    end,
+    defeat = function(self)
+        for i, v in ipairs(G.playing_cards) do
+            if not v.seal then
+                SMODS.debuff_card(v, false, 'redseal1'..tostring(i))
+            end
+        end
+        for i, v in ipairs(G.jokers.cards) do
+            if not v.seal then
+                SMODS.debuff_card(v, false, 'redseal2'..tostring(i))
+            end
+        end
+        for i, v in ipairs(G.consumeables.cards) do
+            if not v.seal then
+                SMODS.debuff_card(v, false, 'redseal3'..tostring(i))
+            end
+        end
+    end
+}
 
 SMODS.Keybind{
     key_pressed = '-',
