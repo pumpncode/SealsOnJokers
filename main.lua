@@ -1315,6 +1315,59 @@ SMODS.Joker{
     end
 }
 
+SMODS.Back{
+    key = 'seal',
+    name = 'AllSealsDeck',
+    loc_txt = {
+        name = 'Seal Deck',
+        text = {
+            "All cards in shop",
+            "have seals",
+        }
+    },
+    atlas = 'Enhancers',
+    pos = {x = 5, y = 2},
+}
+
+local oldupdate = Card.update
+function Card:update(dt)
+    if (G.GAME.selected_back and G.GAME.selected_back.effect and G.GAME.selected_back.effect.center and G.GAME.selected_back.effect.center.name == 'AllSealsDeck') or (G.GAME.selected_sleeve == 'AllSealsDeck') then
+        local seals = {'Red', 'Blue', 'Gold', 'Purple'}
+        if cryptidyeohna then
+            table.insert(seals, {'cry_azure', 'cry_green'})
+        end
+        if G.shop_jokers and G.shop_jokers.cards and G.shop_jokers.cards[1] then
+            for k, v in ipairs(G.shop_jokers.cards) do
+                if not v.seal then
+                    v:set_seal(pseudorandom_element(seals, pseudoseed('seal')), true, true)
+                end
+            end
+        end
+        if G.shop_booster and G.shop_booster.cards and G.shop_booster.cards[1] then
+            for k, v in ipairs(G.shop_booster.cards) do
+                if not v.seal then
+                    v:set_seal(pseudorandom_element(seals, pseudoseed('seal')), true, true)
+                end
+            end
+        end
+        if G.shop_vouchers and G.shop_vouchers.cards and G.shop_vouchers.cards[1] then
+            for k, v in ipairs(G.shop_vouchers.cards) do
+                if not v.seal then
+                    v:set_seal(pseudorandom_element(seals, pseudoseed('seal')), true, true)
+                end
+            end
+        end
+        if G.pack_cards and G.pack_cards.cards and G.pack_cards.cards[1] then
+            for k, v in ipairs(G.pack_cards.cards) do
+                if not v.seal then
+                    v:set_seal(pseudorandom_element(seals, pseudoseed('seal')), true, true)
+                end
+            end
+        end
+    end
+    return oldupdate(self, dt)
+end
+
 SMODS.Joker:take_ownership('j_mail',
     {
         calculate = function(self, card, context)

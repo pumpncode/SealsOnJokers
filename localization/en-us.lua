@@ -80,7 +80,11 @@ return {
         labels={},
         poker_hand_descriptions={},
         poker_hands={},
-        quips={},
+        quips={
+            again = {
+                "Again!"
+            }
+        },
         ranks={},
         suits_plural={},
         suits_singular={},
