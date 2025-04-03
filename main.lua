@@ -13,6 +13,20 @@ SMODS.Atlas{
 }
 
 SMODS.Atlas{
+    key = 'Sleeves',
+    path = 'Sleeves.png',
+    px = 71,
+    py = 95
+}
+
+SMODS.Atlas{
+    key = 'Stakes',
+    path = 'Stakes.png',
+    px = 29,
+    py = 29
+}
+
+SMODS.Atlas{
     key = 'modicon',
     path = 'modicon.png',
     px = 34,
@@ -52,7 +66,7 @@ SMODS.Consumable{
     can_use = function(self,card)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
-            if not v.seal then
+            if (not v.seal) or ((G.GAME.selected_sleeve == "sleeve_soe_seal" and (G.GAME.selected_back and G.GAME.selected_back.effect and G.GAME.selected_back.effect.center and G.GAME.selected_back.effect.center.key == 'b_soe_seal')) and not v.extraseal) then
                 eligible[#eligible + 1] = v
             end
         end
@@ -61,7 +75,7 @@ SMODS.Consumable{
     use = function(self,card,area,copier)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
-            if not v.seal then
+            if (not v.seal) or ((G.GAME.selected_sleeve == "sleeve_soe_seal" and (G.GAME.selected_back and G.GAME.selected_back.effect and G.GAME.selected_back.effect.center and G.GAME.selected_back.effect.center.key == 'b_soe_seal')) and not v.extraseal) then
                 eligible[#eligible + 1] = v
             end
         end
@@ -80,6 +94,7 @@ SMODS.Consumable{
                 func = function()
                     if highlighted then
                         highlighted:set_seal("Red")
+                        
                     end
                     return true
                 end,
@@ -167,7 +182,7 @@ SMODS.Consumable{
     can_use = function(self,card)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
-            if not v.seal then
+            if (not v.seal) or ((G.GAME.selected_sleeve == "sleeve_soe_seal" and (G.GAME.selected_back and G.GAME.selected_back.effect and G.GAME.selected_back.effect.center and G.GAME.selected_back.effect.center.key == 'b_soe_seal')) and not v.extraseal) then
                 eligible[#eligible + 1] = v
             end
         end
@@ -176,7 +191,7 @@ SMODS.Consumable{
     use = function(self,card,area,copier)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
-            if not v.seal then
+            if (not v.seal) or ((G.GAME.selected_sleeve == "sleeve_soe_seal" and (G.GAME.selected_back and G.GAME.selected_back.effect and G.GAME.selected_back.effect.center and G.GAME.selected_back.effect.center.key == 'b_soe_seal')) and not v.extraseal) then
                 eligible[#eligible + 1] = v
             end
         end
@@ -999,9 +1014,64 @@ function Card:calculate_seal(context)
                 end
             end
         end
+        if self.extraseal == 'Gold' and context.post_trigger and context.other_card == self then
+            return {
+                dollars = 3,
+                card = self,
+                message_card = self,
+            }
+        end
     end
     if self.ability.set == 'Joker' then return nil end
+    if self.extraseal == 'Gold' then
+        return {
+            dollars = 3,
+            colour = G.C.MONEY,
+            card = self
+        }
+    end
     return oldcalcseal(self, context)
+end
+
+oldsetseal = Card.set_seal
+function Card:set_seal(_seal, silent, immediate)
+    if (G.GAME.selected_sleeve == 'sleeve_soe_seal' and (G.GAME.selected_back and G.GAME.selected_back.effect and G.GAME.selected_back.effect.center and G.GAME.selected_back.effect.center.key == 'b_soe_seal')) and self.seal and not self.extraseal then
+        if _seal then
+            self.extraseal = _seal
+            if not silent then 
+            G.CONTROLLER.locks.seal = true
+                if immediate then 
+                    self:juice_up(0.3, 0.3)
+                    play_sound('gold_seal', 1.2, 0.4)
+                    G.CONTROLLER.locks.seal = false
+                else
+                    G.E_MANAGER:add_event(Event({
+                        trigger = 'after',
+                        delay = 0.3,
+                        func = function()
+                            self:juice_up(0.3, 0.3)
+                            play_sound('gold_seal', 1.2, 0.4)
+                        return true
+                        end
+                    }))
+                    G.E_MANAGER:add_event(Event({
+                        trigger = 'after',
+                        delay = 0.15,
+                        func = function()
+                            G.CONTROLLER.locks.seal = false
+                        return true
+                        end
+                    }))
+                end
+            end
+        end
+        if self.ability.name == 'Gold Card' and self.extraseal == 'Gold' and self.playing_card then 
+            check_for_unlock({type = 'double_gold'})
+        end
+        self:set_cost()
+        return nil
+    end
+    return oldsetseal(self, _seal, silent, immediate)
 end
 
 local oldunhighlightall = CardArea.unhighlight_all
@@ -1329,9 +1399,51 @@ SMODS.Back{
     pos = {x = 5, y = 2},
 }
 
+if CardSleeves then
+    CardSleeves.Sleeve {
+        key = "seal",
+        atlas = "Sleeves",
+        pos = { x = 0, y = 0 },
+        loc_txt = {
+            name = "Seal Sleeve",
+            text = {
+                "All cards in shop",
+                "have seals",
+            }
+        },
+        loc_vars = function(self)
+            local key
+            if self.get_current_deck_key() == "b_soe_seal" then
+                key = self.key .. "_extra"
+            end
+            return {key = key}
+        end,
+    }
+end
+
+SMODS.Stake{
+    key = 'seal',
+    applied_stakes = {'stake_gold'},
+    loc_txt = {
+        name = 'Seal Stake',
+        text = {
+            'I dont know',
+        },
+        sticker = {
+            name = 'Seal Sticker',
+            text = {
+                'I dont know',
+            }
+        }
+    },
+    atlas = 'Stakes',
+    pos = {x = 0, y = 0},
+    colour = G.C.RED
+}
+
 local oldupdate = Card.update
 function Card:update(dt)
-    if (G.GAME.selected_back and G.GAME.selected_back.effect and G.GAME.selected_back.effect.center and G.GAME.selected_back.effect.center.name == 'AllSealsDeck') or (G.GAME.selected_sleeve == 'AllSealsDeck') then
+    if (G.GAME.selected_back and G.GAME.selected_back.effect and G.GAME.selected_back.effect.center and G.GAME.selected_back.effect.center.key == 'b_soe_seal') or (G.GAME.selected_sleeve == 'sleeve_soe_seal') then
         local seals = {'Red', 'Blue', 'Gold', 'Purple'}
         if cryptidyeohna then
             table.insert(seals, {'cry_azure', 'cry_green'})
@@ -1384,13 +1496,25 @@ SMODS.Joker:take_ownership('j_mail',
 )
 
 SMODS.DrawStep{
-    key = 'consumeableseal',
+    key = 'sealsforall',
     order = 10,
     func = function(self)
         if (self.ability.set ~= 'Joker' and (self.ability.set ~= 'Default' and self.ability.set ~= 'Enhanced')) and self.seal then
             G.shared_seals[self.seal].role.draw_major = self
             G.shared_seals[self.seal]:draw_shader('dissolve', nil, nil, nil, self.children.center)
             if self.seal == 'Gold' then G.shared_seals[self.seal]:draw_shader('voucher', nil, self.ARGS.send_to_shader, nil, self.children.center) end
+        end
+    end
+}
+
+SMODS.DrawStep{
+    key = 'secondsealsforall',
+    order = 11,
+    func = function(self)
+        if self.extraseal then
+            G.shared_seals[self.extraseal].role.draw_major = self
+            G.shared_seals[self.extraseal]:draw_shader('dissolve', nil, nil, nil, self.children.center, nil, nil, nil, 1)
+            if self.extraseal == 'Gold' then G.shared_seals[self.extraseal]:draw_shader('voucher', nil, self.ARGS.send_to_shader, nil, self.children.center, nil, nil, nil, 1) end
         end
     end
 }

@@ -68,6 +68,14 @@ return {
         Tag={},
         Tarot={},
         Voucher={},
+        Sleeve = {
+            sleeve_soe_seal_extra = {
+                name = "Seal Sleeve",
+                text = {
+                    "Cards can have {C:attention}2{} Seals",
+                }
+            }
+        }
     },
     misc = {
         achievement_descriptions={},
