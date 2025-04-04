@@ -60,7 +60,7 @@ if next(SMODS.find_mod("Cryptid")) then
 end
 
 function IsEligibleForSeal(card)
-    if (not card.seal) or ((G.GAME.selected_sleeve == "sleeve_soe_seal" and (G.GAME.selected_back and G.GAME.selected_back.effect and G.GAME.selected_back.effect.center and G.GAME.selected_back.effect.center.key == 'b_soe_seal')) and not card.extraseal) or (#SMODS.find_card('j_soe_sealjoker') > 0) then
+    if (not card.seal) or ((G.GAME.selected_sleeve == "sleeve_soe_seal" and (G.GAME.selected_back and G.GAME.selected_back.effect and G.GAME.selected_back.effect.center and G.GAME.selected_back.effect.center.key == 'b_soe_seal')) and not card.extraseal) or (#SMODS.find_card('j_soe_sealjoker') > 0) and card.config.center.key ~= 'j_soe_sealjoker' then
         return true
     end
     return false
@@ -145,7 +145,7 @@ SMODS.Consumable{
     can_use = function(self,card)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
-            if not v.seal then
+            if IsEligibleForSeal(v) then
                 eligible[#eligible + 1] = v
             end
         end
@@ -154,7 +154,7 @@ SMODS.Consumable{
     use = function(self,card,area,copier)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
-            if not v.seal then
+            if IsEligibleForSeal(v) then
                 eligible[#eligible + 1] = v
             end
         end
@@ -203,7 +203,7 @@ SMODS.Consumable{
     can_use = function(self,card)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
-            if (not v.seal) or ((G.GAME.selected_sleeve == "sleeve_soe_seal" and (G.GAME.selected_back and G.GAME.selected_back.effect and G.GAME.selected_back.effect.center and G.GAME.selected_back.effect.center.key == 'b_soe_seal')) and not v.extraseal) then
+            if IsEligibleForSeal(v) then
                 eligible[#eligible + 1] = v
             end
         end
@@ -212,7 +212,7 @@ SMODS.Consumable{
     use = function(self,card,area,copier)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
-            if (not v.seal) or ((G.GAME.selected_sleeve == "sleeve_soe_seal" and (G.GAME.selected_back and G.GAME.selected_back.effect and G.GAME.selected_back.effect.center and G.GAME.selected_back.effect.center.key == 'b_soe_seal')) and not v.extraseal) then
+            if IsEligibleForSeal(v) then
                 eligible[#eligible + 1] = v
             end
         end
@@ -913,6 +913,20 @@ function Card:shatter()
     return oldshatter(self)
 end
 
+SMODS.Enhancement:take_ownership('glass', 
+    {
+        calculate = function(self, card, context)
+            if card.ability.eternal then
+                return nil
+            end
+            if context.destroy_card and context.cardarea == G.play and context.destroy_card == card and pseudorandom('glass') < G.GAME.probabilities.normal/card.ability.extra then
+                return { remove = true }
+            end
+        end,
+    }, 
+    true
+)
+
 local oldisface = Card.is_face
 function Card:is_face()
     if SMODS.has_enhancement(self, 'm_prefix_facecard') then 
@@ -930,12 +944,10 @@ function Card:save()
     cardTable = oldsave(self)
     cardTable.extrasealcount = self.extrasealcount
     cardTable.redsealcount = self.redsealcount
-    cardTable.extraseals = {}
-    if self.extraseals then
-        for k, v in pairs(self.extraseals) do
-            cardTable.extraseals[k] = v
-        end
-    end
+    cardTable.goldsealcount = self.goldsealcount
+    cardTable.bluesealcount = self.bluesealcount
+    cardTable.purplesealcount = self.purplesealcount
+    cardTable.extraseals = self.extraseals
     return cardTable
 end
 
@@ -943,13 +955,11 @@ local oldload = Card.load
 function Card:load(cardTable, other_card)
     self.extrasealcount = cardTable.extrasealcount
     self.redsealcount = cardTable.redsealcount
-    if cardTable.extraseals then
-        for k, v in pairs(cardTable.extraseals) do
-            self[k] = v
-        end
-    end
-    local g = oldload(self, cardTable, other_card)
-    return g
+    self.goldsealcount = cardTable.goldsealcount
+    self.bluesealcount = cardTable.bluesealcount
+    self.purplesealcount = cardTable.purplesealcount
+    self.extraseals = cardTable.extraseals
+    return oldload(self, cardTable, other_card)
 end
 
 local oldcalcseal = Card.calculate_seal
@@ -1056,16 +1066,47 @@ function Card:calculate_seal(context)
                 end
             end
         end
-        if self.extraseal then
-            if self.extraseal == 'Gold' and context.post_trigger and context.other_card == self then
-                return {
-                    dollars = 3,
-                    card = self,
-                    message_card = self,
-                }
+        if self.extraseals then
+            if table.contains(self.extraseals, "Gold") and context.post_trigger and context.other_card == self then
+                for i = 1, self.goldsealcount do
+                    G.E_MANAGER:add_event(Event({
+                        trigger = "before",
+                        delay = 0.0,
+                        func = (function()
+                            ease_dollars(3)
+                            card_eval_status_text(self, 'extra', nil, nil, nil, {message = "$3", colour = G.C.MONEY})
+                            return true
+                        end)
+                    }))
+                end
             end
+            if table.contains(self.extraseals, "Blue") and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit and context.end_of_round and context.cardarea == self.area then
+                for i = 1, self.bluesealcount do
+                    local card_type = 'Planet'
+                    G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+                    G.E_MANAGER:add_event(Event({
+                        trigger = 'before',
+                        delay = 0.0,
+                        func = (function()
+                            if G.GAME.last_hand_played then
+                                local _planet = 0
+                                for k, v in pairs(G.P_CENTER_POOLS.Planet) do
+                                    if v.config.hand_type == G.GAME.last_hand_played then
+                                        _planet = v.key
+                                    end
+                                end
+                                local card = create_card(card_type,G.consumeables, nil, nil, nil, nil, _planet, 'blusl')
+                                card:add_to_deck()
+                                G.consumeables:emplace(card)
+                                G.GAME.consumeable_buffer = 0
+                            end
+                            return true
+                        end)}))
+                    card_eval_status_text(self, 'extra', nil, nil, nil, {message = localize('k_plus_planet'), colour = G.C.SECONDARY_SET.Planet})
+                end
+            end 
         end
-        if self.seal == 'Red' or (self.extraseal and self.extraseal == 'Red') then
+        if (self.extraseals and table.contains(self.extraseals, "Red")) or self.seal == "Red" then
             if context.retrigger_joker_check and not context.retrigger_joker and context.other_card == self then
                 return {
                     repetitions = self.redsealcount,
@@ -1123,14 +1164,16 @@ end
 
 oldsetseal = Card.set_seal
 function Card:set_seal(_seal, silent, immediate)
-    if #SMODS.find_card("j_soe_sealjoker") > 0 then
+    if #SMODS.find_card("j_soe_sealjoker") > 0 and _seal then
         if not self.seal then
             self:set_sealbutbetter('seal', _seal, silent, immediate)
+            self[string.lower(_seal)..'sealcount'] = (self[string.lower(_seal)..'sealcount'] or 0) + 1
         elseif not self.extraseal then
             self:set_sealbutbetter('extraseal', _seal, silent, immediate)
             self.extraseals = self.extraseals or {}
             self.extraseals['extraseal'] = _seal
             self.extrasealcount = (self.extrasealcount or 0) + 1
+            self[string.lower(_seal)..'sealcount'] = (self[string.lower(_seal)..'sealcount'] or 0) + 1
         else
             local random = '483959652912'
             while true do
@@ -1141,7 +1184,8 @@ function Card:set_seal(_seal, silent, immediate)
             self.extraseals = self.extraseals or {}
             self.extraseals['extraseal'..random] = _seal
             self.extrasealcount = (self.extrasealcount or 0) + 1
-            self.redsealcount = (self.redsealcount or 0) + 1
+            self[string.lower(_seal)..'sealcount'] = (self[string.lower(_seal)..'sealcount'] or 0) + 1
+            print(self[string.lower(_seal)..'sealcount'])
         end
         return nil
     end
@@ -1491,17 +1535,6 @@ if cryptidyeohna then
     }
 end
 
-function Card:Getnumberofseal(seal)
-    local number = 0
-    if self.seal == seal then
-        number = number + 1
-    end
-    if self.extraseal == seal then
-        number = number + 1
-    end
-    return number
-end
-
 SMODS.Seal{
     key = 'sealseal',
     name = 'SealSeal',
@@ -1681,10 +1714,46 @@ SMODS.DrawStep{
     key = 'secondsealsforall',
     order = 11,
     func = function(self, card)
-        if self.extraseal then
+        if self.extraseal and not (#SMODS.find_card("j_soe_sealjoker") > 0) then
             G.shared_seals[self.extraseal].role.draw_major = self
             G.shared_seals[self.extraseal]:draw_shader('dissolve', nil, nil, nil, self.children.center, nil, nil, nil, 1)
             if self.extraseal == 'Gold' then G.shared_seals[self.extraseal]:draw_shader('voucher', nil, self.ARGS.send_to_shader, nil, self.children.center, nil, nil, nil, 1) end
+        end
+    end
+}
+
+function table.contains(table, element)
+    for _, value in pairs(table) do
+      if value == element then
+        return true
+      end
+    end
+    return false
+  end
+  
+
+SMODS.DrawStep{
+    key = 'foursealstoshow',
+    order = 12,
+    func = function(self, card)
+        if self.extraseals and (#SMODS.find_card("j_soe_sealjoker") > 0) then
+            if table.contains(self.extraseals, "Red") then
+                G.shared_seals["Red"].role.draw_major = self
+                G.shared_seals["Red"]:draw_shader('dissolve', nil, nil, nil, self.children.center, nil, nil, nil, nil)
+            end
+            if table.contains(self.extraseals, "Gold") then
+                G.shared_seals["Gold"].role.draw_major = self
+                G.shared_seals["Gold"]:draw_shader('dissolve', nil, nil, nil, self.children.center, nil, nil, nil, 1)
+                G.shared_seals["Gold"]:draw_shader('voucher', nil, self.ARGS.send_to_shader, nil, self.children.center, nil, nil, nil, 1)
+            end
+            if table.contains(self.extraseals, "Blue") then
+                G.shared_seals["Blue"].role.draw_major = self
+                G.shared_seals["Blue"]:draw_shader('dissolve', nil, nil, nil, self.children.center, nil, nil, 0.5)
+            end
+            if table.contains(self.extraseals, "Purple") then
+                G.shared_seals["Purple"].role.draw_major = self
+                G.shared_seals["Purple"]:draw_shader('dissolve', nil, nil, nil, self.children.center, nil, nil, 0.5, 1)
+            end
         end
     end
 }
