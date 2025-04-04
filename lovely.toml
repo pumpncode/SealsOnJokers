@@ -80,3 +80,13 @@ G.E_MANAGER:add_event(Event({
 }))
 """
 match_indent = true
+
+# Show a Seal Seal because why not
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+pattern = "replace_card.states.visible = false"
+position = "before"
+payload = "replace_card:set_seal('soe_sealseal', true, true)"
+match_indent = true
+overwrite = false
