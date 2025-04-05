@@ -1,11 +1,48 @@
 return {
     descriptions = {
-        Back={},
-        Blind={},
+        Back={
+            b_soe_seal = {
+                name = 'Seal Deck',
+                text = {
+                    "All cards in shop",
+                    "have seals",
+                }
+            },
+        },
+        Blind={
+            bl_soe_theseal = {
+                name = 'The Seal',
+                text = {
+                    'Cards without seals are debuffed',
+                }
+            },
+        },
         Edition={},
         Enhanced={},
-        Joker={},
+        Joker={
+            j_soe_stonecardjoker = {
+                name = 'Stone Card Joker',
+                text={
+                    "{C:chips}+#1#{} Chips",
+                },
+            },
+            j_soe_sealjoker = {
+                name = 'Seal',
+                text={
+                    "Cards can have {s:3,C:dark_edition}infinite{}",
+                    "seals"
+                },
+            },
+        },
         Other={
+            soe_sealseal_seal = {
+                name = 'Seal Seal',
+                text = {
+                    'If this card has a second seal,',
+                    'Spread it to adjacent cards before scoring',
+                    'Otherwise, {C:mult}+#1#{} Mult'
+                },
+            },
             red_seal_joker = {
                 name="Red Seal",
                 text={
@@ -63,12 +100,126 @@ return {
             },
         },
         Planet={},
-        Spectral={},
+        Spectral={
+            c_soe_dejavuq = {
+                name = 'Deja Vu?',
+                text = {
+                    'Add a {C:red}Red Seal{}',
+                    'to a random joker',
+                }
+            },
+            c_soe_tranceq = {
+                name = 'Trance?',
+                text = {
+                    'Add a {C:blue}Blue Seal{}',
+                    'to a random joker',
+                }
+            },
+            c_soe_talismanq = {
+                name = 'Talisman?',
+                text = {
+                    'Add a {C:gold}Gold Seal{}',
+                    'to a random joker',
+                }
+            },
+            c_soe_mediumq = {
+                name = 'Medium?',
+                text = {
+                    'Add a {C:purple}Purple Seal{}',
+                    'to a random joker',
+                }
+            },
+            c_soe_typhoonq = {
+                name = 'Typhoon?',
+                text = {
+                    'Add a {C:cry_azure}Azure Seal{}',
+                    'to a random joker',
+                }
+            },
+            c_soe_sourceq = {
+                name = 'Source?',
+                text = {
+                    'Add a {C:cry_code}Green Seal{}',
+                    'to a random joker',
+                }
+            },
+            c_soe_eternalq = {
+                name = 'Eternal?',
+                text = {
+                    'Add {C:attention}Eternal{}',
+                    'to a random card in hand',
+                }
+            },
+            c_soe_dejavuqq = {
+                name = 'Deja Vu??',
+                text = {
+                    'Add a {C:red}Red Seal{}',
+                    'to a random consumable',
+                }
+            },
+        },
         Stake={},
         Tag={},
-        Tarot={},
+        Tarot={
+            c_soe_devilq = {
+                name = 'Devil?',
+                text = {
+                    'Add the {C:attention}Gold{} Enhancement',
+                    'to a random joker',
+                }
+            },
+            c_soe_towerq = {
+                name = 'Tower?',
+                text = {
+                    'Add the {C:attention}Stone{} Enhancement',
+                    'to a random joker',
+                }
+            },
+            c_soe_chariotq = {
+                name = 'Chariot?',
+                text = {
+                    'Add the {C:attention}Steel{} Enhancement',
+                    'to a random joker',
+                }
+            },
+            c_soe_empressq = {
+                name = 'Empress?',
+                text = {
+                    'Add the {C:attention}Mult{} Enhancement',
+                    'to a random joker',
+                }
+            },
+            c_soe_hierophantq = {
+                name = 'Hierophant?',
+                text = {
+                    'Add the {C:attention}Bonus{} Enhancement',
+                    'to a random joker',
+                }
+            },
+            c_soe_magicianq = {
+                name = 'Magician?',
+                text = {
+                    'Add the {C:attention}Lucky{} Enhancement',
+                    'to a random joker',
+                }
+            },
+            c_soe_justiceq = {
+                name = 'Justice?',
+                text = {
+                    'Add the {C:attention}Glass{} Enhancement',
+                    'to a random joker',
+                }
+            },
+        },
         Voucher={},
         Sleeve = {
+            sleeve_soe_seal = {
+                name = "Seal Sleeve",
+                text = {
+                    "All cards in shop",
+                    "have seals",
+                }
+            },
             sleeve_soe_seal_extra = {
                 name = "Seal Sleeve",
                 text = {
@@ -85,7 +236,9 @@ return {
         collabs={},
         dictionary={},
         high_scores={},
-        labels={},
+        labels={
+            soe_sealseal_seal = 'Seal Seal'
+        },
         poker_hand_descriptions={},
         poker_hands={},
         quips={

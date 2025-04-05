@@ -67,17 +67,10 @@ function IsEligibleForSeal(card)
 end
 
 SMODS.Consumable{
-    key = 'dejavu?',
+    key = 'dejavuq',
     set = 'Spectral',
     atlas = 'What',
     pos = {x = 0, y = 0},
-    loc_txt = {
-        name = 'Deja Vu?',
-        text = {
-            'Add a {C:red}Red Seal{}',
-            'to a random joker',
-        }
-    },
     config = {mod_conv = "Red", cards = 1},
     loc_vars = function(self,info_queue,center)
         info_queue[#info_queue+1] = { key = "red_seal_joker", set = "Other"}
@@ -125,17 +118,10 @@ SMODS.Consumable{
 }
 
 SMODS.Consumable{
-    key = 'trance?',
+    key = 'tranceq',
     set = 'Spectral',
     atlas = 'What',
     pos = {x = 1, y = 0},
-    loc_txt = {
-        name = 'Trance?',
-        text = {
-            'Add a {C:blue}Blue Seal{}',
-            'to a random joker',
-        }
-    },
     config = {mod_conv = "Blue", cards = 1},
     loc_vars = function(self,info_queue,center)
         info_queue[#info_queue+1] = { key = "blue_seal_joker", set = "Other"}
@@ -183,17 +169,10 @@ SMODS.Consumable{
 }
 
 SMODS.Consumable{
-    key = 'talisman?',
+    key = 'talismanq',
     set = 'Spectral',
     atlas = 'What',
     pos = {x = 2, y = 0},
-    loc_txt = {
-        name = 'Talisman?',
-        text = {
-            'Add a {C:gold}Gold Seal{}',
-            'to a random joker',
-        }
-    },
     config = {mod_conv = "Gold", cards = 1},
     loc_vars = function(self,info_queue,center)
         info_queue[#info_queue+1] = { key = "gold_seal_joker", set = "Other"}
@@ -240,17 +219,10 @@ SMODS.Consumable{
 }
 
 SMODS.Consumable{
-    key = 'medium?',
+    key = 'mediumq',
     set = 'Spectral',
     atlas = 'What',
     pos = {x = 3, y = 0},
-    loc_txt = {
-        name = 'Medium?',
-        text = {
-            'Add a {C:purple}Purple Seal{}',
-            'to a random joker',
-        }
-    },
     config = {mod_conv = "Purple", cards = 1},
     loc_vars = function(self,info_queue,center)
         info_queue[#info_queue+1] = { key = "purple_seal_joker", set = "Other"}
@@ -298,17 +270,10 @@ SMODS.Consumable{
 
 if cryptidyeohna then
     SMODS.Consumable{
-        key = 'typhoon?',
+        key = 'typhoonq',
         set = 'Spectral',
         atlas = 'What',
         pos = {x = 4, y = 0},
-        loc_txt = {
-            name = 'Typhoon?',
-            text = {
-                'Add a {C:cry_azure}Azure Seal{}',
-                'to a random joker',
-            }
-        },
         config = {mod_conv = "cry_azure", cards = 1},
         loc_vars = function(self,info_queue,center)
             info_queue[#info_queue+1] = { key = "cry_azure_seal_joker", set = "Other"}
@@ -354,17 +319,10 @@ if cryptidyeohna then
         end
     }
     SMODS.Consumable{
-        key = 'source?',
+        key = 'sourceq',
         set = 'Spectral',
         atlas = 'What',
         pos = {x = 5, y = 0},
-        loc_txt = {
-            name = 'Source?',
-            text = {
-                'Add a {C:cry_code}Green Seal{}',
-                'to a random joker',
-            }
-        },
         config = {mod_conv = "cry_green", cards = 1},
         loc_vars = function(self,info_queue,center)
             info_queue[#info_queue+1] = { key = "cry_green_seal_joker", set = "Other"}
@@ -412,17 +370,10 @@ if cryptidyeohna then
 end
 
 SMODS.Consumable{
-    key = 'devil?',
+    key = 'devilq',
     set = 'Tarot',
     atlas = 'What',
     pos = {x = 6, y = 0},
-    loc_txt = {
-        name = 'Devil?',
-        text = {
-            'Add the {C:attention}Gold{} Enhancement',
-            'to a random joker',
-        }
-    },
     unlocked = true,
     discovered = true,
     can_use = function(self,card)
@@ -466,17 +417,10 @@ SMODS.Consumable{
 }
 
 SMODS.Consumable{
-    key = 'tower?',
+    key = 'towerq',
     set = 'Tarot',
     atlas = 'What',
     pos = {x = 7, y = 0},
-    loc_txt = {
-        name = 'Tower?',
-        text = {
-            'Add the {C:attention}Stone{} Enhancement',
-            'to a random joker',
-        }
-    },
     unlocked = true,
     discovered = true,
     can_use = function(self,card)
@@ -520,17 +464,10 @@ SMODS.Consumable{
 }
 
 SMODS.Consumable{
-    key = 'chariot?',
+    key = 'chariotq',
     set = 'Tarot',
     atlas = 'What',
     pos = {x = 8, y = 0},
-    loc_txt = {
-        name = 'Chariot?',
-        text = {
-            'Add the {C:attention}Steel{} Enhancement',
-            'to a random joker',
-        }
-    },
     unlocked = true,
     discovered = true,
     can_use = function(self,card)
@@ -574,17 +511,10 @@ SMODS.Consumable{
 }
 
 SMODS.Consumable{
-    key = 'empress?',
+    key = 'empressq',
     set = 'Tarot',
     atlas = 'What',
     pos = {x = 9, y = 0},
-    loc_txt = {
-        name = 'Empress?',
-        text = {
-            'Add the {C:attention}Mult{} Enhancement',
-            'to a random joker',
-        }
-    },
     unlocked = true,
     discovered = true,
     can_use = function(self,card)
@@ -628,17 +558,10 @@ SMODS.Consumable{
 }
 
 SMODS.Consumable{
-    key = 'hierophant?',
+    key = 'hierophantq',
     set = 'Tarot',
     atlas = 'What',
     pos = {x = 10, y = 0},
-    loc_txt = {
-        name = 'Hierophant?',
-        text = {
-            'Add the {C:attention}Bonus{} Enhancement',
-            'to a random joker',
-        }
-    },
     unlocked = true,
     discovered = true,
     can_use = function(self,card)
@@ -682,17 +605,10 @@ SMODS.Consumable{
 }
 
 SMODS.Consumable{
-    key = 'magician?',
+    key = 'magicianq',
     set = 'Tarot',
     atlas = 'What',
     pos = {x = 11, y = 0},
-    loc_txt = {
-        name = 'Magician?',
-        text = {
-            'Add the {C:attention}Lucky{} Enhancement',
-            'to a random joker',
-        }
-    },
     unlocked = true,
     discovered = true,
     can_use = function(self,card)
@@ -736,17 +652,10 @@ SMODS.Consumable{
 }
 
 SMODS.Consumable{
-    key = 'justice?',
+    key = 'justiceq',
     set = 'Tarot',
     atlas = 'What',
     pos = {x = 12, y = 0},
-    loc_txt = {
-        name = 'Justice?',
-        text = {
-            'Add the {C:attention}Glass{} Enhancement',
-            'to a random joker',
-        }
-    },
     unlocked = true,
     discovered = true,
     can_use = function(self,card)
@@ -790,17 +699,10 @@ SMODS.Consumable{
 }
 
 SMODS.Consumable{
-    key = 'eternal?',
+    key = 'eternalq',
     set = 'Spectral',
     atlas = 'What',
     pos = {x = 0, y = 0},
-    loc_txt = {
-        name = 'Eternal?',
-        text = {
-            'Add {C:attention}Eternal{}',
-            'to a random card in hand',
-        }
-    },
     unlocked = true,
     discovered = true,
     can_use = function(self,card)
@@ -833,7 +735,7 @@ SMODS.Consumable{
                 delay = 0.1,
                 func = function()
                     if highlighted then
-                        highlighted.ability.eternal = true
+                        highlighted.ability.perishable = true
                     end
                     return true
                 end,
@@ -843,17 +745,10 @@ SMODS.Consumable{
 }
 
 SMODS.Consumable{
-    key = 'dejavu??',
+    key = 'dejavuqq',
     set = 'Spectral',
     atlas = 'What',
     pos = {x = 0, y = 0},
-    loc_txt = {
-        name = 'Deja Vu??',
-        text = {
-            'Add a {C:red}Red Seal{}',
-            'to a random consumable',
-        }
-    },
     config = {mod_conv = "Red", cards = 1},
     loc_vars = function(self,info_queue,center)
         info_queue[#info_queue+1] = { key = "red_seal_joker", set = "Other"}
@@ -972,6 +867,13 @@ function Card:calculate_seal(context)
                 card = self
             }
         end
+        if self.seal == 'Gold' and self.extraseals == nil and context.post_trigger and context.other_card == self then
+            return {
+                dollars = 3,
+                message_card = self,
+                card = self
+            }
+        end
         if self.seal == 'Blue' and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit and context.end_of_round and context.cardarea == G.jokers then
             local card_type = 'Planet'
             G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
@@ -1076,15 +978,8 @@ function Card:calculate_seal(context)
         if self.extraseals then
             if table.contains(self.extraseals, "Gold") and context.post_trigger and context.other_card == self then
                 for i = 1, self.goldsealcount do
-                    G.E_MANAGER:add_event(Event({
-                        trigger = "before",
-                        delay = 0.0,
-                        func = (function()
-                            ease_dollars(3)
-                            card_eval_status_text(self, 'extra', nil, nil, nil, {message = "$3", colour = G.C.MONEY})
-                            return true
-                        end)
-                    }))
+                    ease_dollars(3)
+                    card_eval_status_text(self, 'extra', nil, nil, nil, {message = "$3", colour = G.C.MONEY})
                 end
             end
             if table.contains(self.extraseals, "Blue") and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit and context.end_of_round and context.cardarea == self.area then
@@ -1247,7 +1142,6 @@ function Card:use_consumeable(area, copier)
     if self.seal then
         if self.seal == 'Gold' then
             G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.4, func = function()
-                used_tarot:juice_up(0.3, 0.5)
                 ease_dollars(3)
                 card_eval_status_text(self, 'extra', nil, nil, nil, {message = "$3", colour = G.C.MONEY})
                 return true end 
@@ -1312,7 +1206,6 @@ function Card:open()
     if self.ability.set == 'Booster' and self.seal then
         if self.seal == 'Gold' then
             G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.4, func = function()
-                self:juice_up(0.3, 0.5)
                 ease_dollars(3)
                 card_eval_status_text(self, 'extra', nil, nil, nil, {message = "$3", colour = G.C.MONEY})
                 return true end 
@@ -1320,6 +1213,20 @@ function Card:open()
         end
     end
     return oldopen(self)
+end
+
+local oldredeem = Card.redeem
+function Card:redeem()
+    if self.ability.set == 'Voucher' and self.seal then
+        if self.seal == 'Gold' then
+            G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.4, func = function()
+                ease_dollars(3)
+                card_eval_status_text(self, 'extra', nil, nil, nil, {message = "$3", colour = G.C.MONEY})
+                return true end 
+            }))
+        end
+    end
+    return oldredeem(self)
 end
 
 local oldcalcjoker = Card.calculate_joker
@@ -1457,7 +1364,7 @@ function Card:calculate_joker(context)
             end
         end
     end
-    if self.ability and (self.ability.set == 'Tarot' or self.ability.set == 'Spectral' or self.ability.set == 'Voucher' or self.ability.set == 'Planet  ') and self.seal then
+    if self.ability and (self.ability.set == 'Tarot' or self.ability.set == 'Spectral' or self.ability.set == 'Voucher' or self.ability.set == 'Planet') and self.seal then
         if self.seal == 'Blue' and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit and context.end_of_round and context.cardarea == G.consumeables then
             local card_type = 'Planet'
             G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
@@ -1504,12 +1411,6 @@ end
 SMODS.Joker{
     name = 'StoneCardJoker',
     key = 'stonecardjoker',
-    loc_txt = {
-        name = 'Stone Card Joker',
-        text={
-            "{C:chips}+#1#{} Chips",
-        },
-    },
     atlas = 'Enhancers',
     pos = {x = 5, y = 0},
     rarity = 3,
@@ -1544,13 +1445,6 @@ if cryptidyeohna then
     SMODS.Joker{
         name = 'SealJoker',
         key = 'sealjoker',
-        loc_txt = {
-            name = 'Seal',
-            text={
-                "Cards can have {s:3,C:dark_edition}infinite{}",
-                "seals"
-            },
-        },
         atlas = 'Exotics',
         pos = {x = 0, y = 0},
         soul_pos = {x = 1, y = 0},
@@ -1567,26 +1461,15 @@ end
 SMODS.Seal{
     key = 'sealseal',
     name = 'SealSeal',
-    loc_txt = {
-        name = 'Seal Seal',
-        text = {
-            'If this card has a second seal,',
-            'Spread it to adjacent cards before scoring',
-            'Otherwise, {C:mult}+#1#{} Mult'
-        },
-        label = 'Seal Seal'
-    },
     badge_colour = HEX('E8463D'),
     atlas = 'Seals',
     pos = { x = 0, y = 0 },
     config = {omult = 5},
     loc_vars = function(self, info_queue)
-        info_queue[#info_queue+1] = {key = "sleeve_soe_seal_extra", set = "Sleeve"}
         return {vars = {self.config.omult}}
     end,
     calculate = function(self, card, context)
         if card.extraseal and context.before then
-            local secondseal = card.extraseal
             local adjacentright, adjacentleft
             if context.cardarea == G.jokers or context.cardarea == G.hand or context.cardarea == G.consumeables or context.cardarea == G.play then
                 for i=1, #card.area.cards do
@@ -1620,13 +1503,6 @@ SMODS.Seal{
 SMODS.Back{
     key = 'seal',
     name = 'AllSealsDeck',
-    loc_txt = {
-        name = 'Seal Deck',
-        text = {
-            "All cards in shop",
-            "have seals",
-        }
-    },
     atlas = 'Enhancers',
     pos = {x = 5, y = 2},
 }
@@ -1636,13 +1512,6 @@ if CardSleeves then
         key = "seal",
         atlas = "Sleeves",
         pos = { x = 0, y = 0 },
-        loc_txt = {
-            name = "Seal Sleeve",
-            text = {
-                "All cards in shop",
-                "have seals",
-            }
-        },
         loc_vars = function(self)
             local key
             if self.get_current_deck_key() == "b_soe_seal" then
@@ -1653,6 +1522,7 @@ if CardSleeves then
     }
 end
 
+--[[
 SMODS.Stake{
     key = 'seal',
     applied_stakes = {'stake_gold'},
@@ -1672,6 +1542,7 @@ SMODS.Stake{
     pos = {x = 0, y = 0},
     colour = G.C.RED
 }
+]]
 
 local oldupdate = Card.update
 function Card:update(dt)
@@ -1769,13 +1640,15 @@ SMODS.DrawStep{
 }
 
 function table.contains(table, element)
-    for _, value in pairs(table) do
-      if value == element then
-        return true
-      end
+    if table and type(table) == "table" then
+        for _, value in pairs(table) do
+            if value == element then
+                return true
+            end
+        end
+        return false
     end
-    return false
-  end
+end
   
 
 SMODS.DrawStep{
@@ -1815,12 +1688,6 @@ SMODS.Atlas{
 
 SMODS.Blind{
     key = 'theseal',
-    loc_txt = {
-        name = 'The Seal',
-        text = {
-            'Cards without seals are debuffed',
-        }
-    },
     atlas = 'Blinds',
     discovered = true,
     pos = {x = 0, y = 0},
