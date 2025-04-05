@@ -260,7 +260,7 @@ SMODS.Consumable{
     can_use = function(self,card)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
-            if not v.seal then
+            if IsEligibleForSeal(v) then
                 eligible[#eligible + 1] = v
             end
         end
@@ -269,7 +269,7 @@ SMODS.Consumable{
     use = function(self,card,area,copier)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
-            if not v.seal then
+            if IsEligibleForSeal(v) then
                 eligible[#eligible + 1] = v
             end
         end
@@ -966,6 +966,12 @@ local oldcalcseal = Card.calculate_seal
 function Card:calculate_seal(context)
     if self.debuff then return nil end
     if self.ability and self.ability.set == 'Joker' then
+        if self.seal == 'Red' and self.extraseals == nil and context.retrigger_joker_check and not context.retrigger_joker and context.other_card == self then
+            return {
+                repetitions = 1,
+                card = self
+            }
+        end
         if self.seal == 'Blue' and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit and context.end_of_round and context.cardarea == G.jokers then
             local card_type = 'Planet'
             G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
@@ -989,21 +995,22 @@ function Card:calculate_seal(context)
                 end)}))
             card_eval_status_text(self, 'extra', nil, nil, nil, {message = localize('k_plus_planet'), colour = G.C.SECONDARY_SET.Planet})
         end
-        if self.seal == 'Purple' and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
-            G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
-            G.E_MANAGER:add_event(Event({
-                trigger = 'before',
-                delay = 0.0,
-                func = (function()
-                        local card = create_card('Tarot',G.consumeables, nil, nil, nil, nil, nil, '8ba')
-                        card:add_to_deck()
-                        G.consumeables:emplace(card)
-                        G.GAME.consumeable_buffer = 0
-                    return true
-                end)}))
-            card_eval_status_text(self, 'extra', nil, nil, nil, {message = localize('k_plus_tarot'), colour = G.C.PURPLE})
+        if self.seal == 'Purple' and context.selling_self then
+            if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+                G.E_MANAGER:add_event(Event({
+                    trigger = 'before',
+                    delay = 0.0,
+                    func = (function()
+                            local card = create_card('Tarot',G.consumeables, nil, nil, nil, nil, nil, '8ba')
+                            card:add_to_deck()
+                            G.consumeables:emplace(card)
+                            G.GAME.consumeable_buffer = 0
+                        return true
+                    end)}))
+                card_eval_status_text(self, 'extra', nil, nil, nil, {message = localize('k_plus_tarot'), colour = G.C.PURPLE})
+            end
         end
-        if self.seal == 'Gold' and context.post_trigger and context.other_card == self then
+        if self.seal == 'Gold' and context.post_trigger and context.other_card == self and not table.contains(self.extraseals, "Gold") then
             ease_dollars(3)
             card_eval_status_text(self, 'extra', nil, nil, nil, {message = "$3", colour = G.C.MONEY})
         end
@@ -1081,30 +1088,52 @@ function Card:calculate_seal(context)
                 end
             end
             if table.contains(self.extraseals, "Blue") and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit and context.end_of_round and context.cardarea == self.area then
-                for i = 1, self.bluesealcount do
-                    local card_type = 'Planet'
-                    G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
-                    G.E_MANAGER:add_event(Event({
-                        trigger = 'before',
-                        delay = 0.0,
-                        func = (function()
-                            if G.GAME.last_hand_played then
-                                local _planet = 0
-                                for k, v in pairs(G.P_CENTER_POOLS.Planet) do
-                                    if v.config.hand_type == G.GAME.last_hand_played then
-                                        _planet = v.key
-                                    end
+                local card_type = 'Planet'
+                G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+                G.E_MANAGER:add_event(Event({
+                    trigger = 'before',
+                    delay = 0.0,
+                    func = (function()
+                        if G.GAME.last_hand_played then
+                            local _planet = 0
+                            for k, v in pairs(G.P_CENTER_POOLS.Planet) do
+                                if v.config.hand_type == G.GAME.last_hand_played then
+                                    _planet = v.key
                                 end
-                                local card = create_card(card_type,G.consumeables, nil, nil, nil, nil, _planet, 'blusl')
-                                card:add_to_deck()
-                                G.consumeables:emplace(card)
-                                G.GAME.consumeable_buffer = 0
                             end
-                            return true
-                        end)}))
-                    card_eval_status_text(self, 'extra', nil, nil, nil, {message = localize('k_plus_planet'), colour = G.C.SECONDARY_SET.Planet})
+                            for i = 1, self.bluesealcount do
+                                if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+                                    local card = create_card(card_type,G.consumeables, nil, nil, nil, nil, _planet, 'blusl')
+                                    card:add_to_deck()
+                                    G.consumeables:emplace(card)
+                                else
+                                    break
+                                end
+                            end
+                            G.GAME.consumeable_buffer = 0
+                        end
+                        return true
+                    end)}))
+                card_eval_status_text(self, 'extra', nil, nil, nil, {message = '+'..tostring(math.min(self.bluesealcount, G.consumeables.config.card_limit - #G.consumeables.cards - G.GAME.consumeable_buffer + 1))..' Planet'..(self.bluesealcount > 1 and 's' or ''), colour = G.C.SECONDARY_SET.Planet})
+            end
+            if table.contains(self.extraseals, "Purple") and context.selling_self then
+                for i = 1, self.purplesealcount do
+                    G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+                    if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+                        G.E_MANAGER:add_event(Event({
+                            trigger = 'before',
+                            delay = 0.0,
+                            func = (function()
+                                    local card = create_card('Tarot',G.consumeables, nil, nil, nil, nil, nil, '8ba')
+                                    card:add_to_deck()
+                                    G.consumeables:emplace(card)
+                                    G.GAME.consumeable_buffer = 0
+                                return true
+                            end)}))
+                        card_eval_status_text(self, 'extra', nil, nil, nil, {message = localize('k_plus_tarot'), colour = G.C.PURPLE})
+                    end
                 end
-            end 
+            end
         end
         if (self.extraseals and table.contains(self.extraseals, "Red")) or self.seal == "Red" then
             if context.retrigger_joker_check and not context.retrigger_joker and context.other_card == self then
@@ -1691,6 +1720,23 @@ SMODS.Joker:take_ownership('j_mail',
                     dollars = card.ability.extra,
                     colour = G.C.MONEY,
                     card = card
+                }
+            end
+        end
+    },
+    true
+)
+
+SMODS.Joker:take_ownership('j_burglar',
+    {
+        calculate = function(self, card, context)
+            if context.setting_blind and not (context.blueprint_card or card).getting_sliced then
+                return {
+                    G.E_MANAGER:add_event(Event({func = function()
+                        ease_discard(-G.GAME.current_round.discards_left, nil, true)
+                        ease_hands_played(card.ability.extra)
+                        card_eval_status_text(context.blueprint_card or card, 'extra', nil, nil, nil, {message = localize{type = 'variable', key = 'a_hands', vars = {card.ability.extra}}})
+                    return true end }))
                 }
             end
         end
