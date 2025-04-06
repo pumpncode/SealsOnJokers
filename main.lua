@@ -108,7 +108,7 @@ SMODS.Consumable{
                 func = function()
                     if highlighted then
                         highlighted:set_seal("Red")
-                        
+                        print(highlighted.redsealcount)
                     end
                     return true
                 end,
@@ -1088,16 +1088,17 @@ end
 
 oldsetseal = Card.set_seal
 function Card:set_seal(_seal, silent, immediate)
+    if _seal then
+        self[string.lower(_seal)..'sealcount'] = (self[string.lower(_seal)..'sealcount'] or 0) + 1
+    end
     if #SMODS.find_card("j_soe_sealjoker") > 0 and _seal then
         if not self.seal then
             self:set_sealbutbetter('seal', _seal, silent, immediate)
-            self[string.lower(_seal)..'sealcount'] = (self[string.lower(_seal)..'sealcount'] or 0) + 1
         elseif not self.extraseal then
             self:set_sealbutbetter('extraseal', _seal, silent, immediate)
             self.extraseals = self.extraseals or {}
             self.extraseals['extraseal'] = _seal
             self.extrasealcount = (self.extrasealcount or 0) + 1
-            self[string.lower(_seal)..'sealcount'] = (self[string.lower(_seal)..'sealcount'] or 0) + 1
         else
             local random = '483959652912'
             while true do
@@ -1108,13 +1109,16 @@ function Card:set_seal(_seal, silent, immediate)
             self.extraseals = self.extraseals or {}
             self.extraseals['extraseal'..random] = _seal
             self.extrasealcount = (self.extrasealcount or 0) + 1
-            self[string.lower(_seal)..'sealcount'] = (self[string.lower(_seal)..'sealcount'] or 0) + 1
             print(self[string.lower(_seal)..'sealcount'])
         end
         return nil
     end
-    if (G.GAME.selected_sleeve == 'sleeve_soe_seal' and (G.GAME.selected_back and G.GAME.selected_back.effect and G.GAME.selected_back.effect.center and G.GAME.selected_back.effect.center.key == 'b_soe_seal')) and self.seal and not self.extraseal then
+    if ((G.GAME.selected_sleeve == 'sleeve_soe_seal' and (G.GAME.selected_back and G.GAME.selected_back.effect and G.GAME.selected_back.effect.center and G.GAME.selected_back.effect.center.key == 'b_soe_seal')) and self.seal and not self.extraseal) and _seal then
         self:set_sealbutbetter('extraseal', _seal, silent, immediate)
+        self.extraseals = self.extraseals or {}
+        self.extraseals['extraseal'] = _seal
+        self.extrasealcount = (self.extrasealcount or 0) + 1
+        print(self[string.lower(_seal)..'sealcount'])
         if self.ability.name == 'Gold Card' and self.extraseal == 'Gold' and self.playing_card then 
             check_for_unlock({type = 'double_gold'})
         end
