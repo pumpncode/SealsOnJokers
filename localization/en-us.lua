@@ -33,6 +33,31 @@ return {
                     "seals"
                 },
             },
+            j_soe_infinityred = {
+                name = 'Infinity Red',
+                text={
+                    "Every time a card triggers",
+                    "put a {C:red}Red Seal{} on it",
+                }
+            },
+            j_soe_infinitypurple = {
+                name = 'Infinity Purple',
+                text={
+                    "Purple"
+                }
+            },
+            j_soe_infinitygold = {
+                name = 'Infinity Gold',
+                text={
+                    "Gold"
+                }
+            },
+            j_soe_infinityblue = {
+                name = 'Infinity Blue',
+                text={
+                    "Blue"
+                }
+            },
         },
         Other={
             soe_sealseal_seal = {
@@ -157,6 +182,13 @@ return {
                     'to a random consumable',
                 }
             },
+            c_soe_dejavuqqq = {
+                name = 'DEJA VU???',
+                text = {
+                    'Add a {C:red}Red Seal{}',
+                    'to the blind',
+                }
+            },
         },
         Stake={},
         Tag={},
@@ -225,19 +257,42 @@ return {
                 text = {
                     "Cards can have {C:attention}2{} Seals",
                 }
-            }
+            },
+            sleeve_soe_redseal = {
+                name = "Red Seal",
+                text = {
+                    "Effects of this deck",
+                    "happen twice",
+                    "{C:inactive}(#1#){}"
+                }
+            },
+            sleeve_soe_goldseal = {
+                name = "Gold Seal",
+                text = {
+                    "First scoring card",
+                    "each hand gives {C:money}$3{}",
+                }
+            },
         }
     },
     misc = {
-        achievement_descriptions={},
-        achievement_names={},
+        achievement_descriptions={
+            ach_soe_completionist_plus_plus_plus = "Earn a Gold Sticker on every Playing Card",
+        },
+        achievement_names={
+            ach_soe_completionist_plus_plus_plus = "Completionist+++",
+        },
         blind_states={},
         challenge_names={},
         collabs={},
-        dictionary={},
+        dictionary={
+            k_soe_infinity = "Infinity",
+        },
         high_scores={},
         labels={
-            soe_sealseal_seal = 'Seal Seal'
+            soe_sealseal_seal = 'Seal Seal',
+
+            k_soe_infinity = "Infinity",
         },
         poker_hand_descriptions={},
         poker_hands={},
