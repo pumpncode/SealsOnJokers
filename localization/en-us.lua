@@ -58,6 +58,25 @@ return {
                     "Blue"
                 }
             },
+            j_soe_infinity = {
+                name = 'The Infinity Seal',
+                text={
+                    ""
+                }
+            },
+            j_soe_extralife = {
+                name = 'Extra Life',
+                text={
+                    "Prevents a game over {C:attention}#1#{} times",
+                }
+            },
+            j_soe_unorganizedjoker = {
+                name = 'Unorganized Joker',
+                text={
+                    "If a card has a property that was not meant for that card,",
+                    "it gives {X:mult,C:white}X#1#{} Mult",
+                }
+            },
         },
         Other={
             soe_sealseal_seal = {
@@ -66,6 +85,44 @@ return {
                     'If this card has a second seal,',
                     'Spread it to adjacent cards before scoring',
                     'Otherwise, {C:mult}+#1#{} Mult'
+                },
+            },
+            soe_rainbowseal_seal = {
+                name = 'Rainbow Seal',
+                text = {
+                    '{C:inactive}(For Jokers){}',
+                    'If this Joker has an edition,',
+                    'Scored cards will give the edition mult/chips',
+                    '{C:inactive}(For Playing Cards){}',
+                    'If this card has an edition,',
+                    '1 in 4 chance cards in hand will give the edition mult/chips',
+                },
+            },
+            soe_reverseseal_seal = {
+                name = 'Reverse Seal',
+                text = {
+                    'If this card is facing {C:attention}down{},',
+                    '{X:mult,C:white}X#1#{} Mult',
+                },
+            },
+            soe_negativeseal_seal = {
+                name = 'Negative Seal',
+                text = {
+                    'This card {C:attention}ignores{} the selection limit,',
+                },
+            },
+            soe_carmineseal_seal = {
+                name = 'Carmine Seal',
+                text = {
+                    'If this card is played and not scored,',
+                    'destroy this card',
+                },
+            },
+            soe_aquaseal_seal = {
+                name = 'Aqua Seal',
+                text = {
+                    'If this card is played and not scored,',
+                    'destroy this card',
                 },
             },
             red_seal_joker = {
@@ -123,8 +180,22 @@ return {
                     "end of round",
                 },
             },
+            legallyplasmasleeve = {
+                name = "Plasma Sleeve",
+                text = G.localization.descriptions.Back["b_plasma"].text
+            },
         },
-        Planet={},
+        Planet={
+            c_soe_demjoker={
+                name="Dem Joker",
+				text = {
+					"{S:0.8}({S:0.8,V:1}lvl.#2#{S:0.8}){} Level up",
+					"{C:attention}#1#",
+					"{C:mult}+#3#{} Mult and",
+					"{C:chips}+#4#{} chip#<s>4#",
+				},	
+            },
+        },
         Spectral={
             c_soe_dejavuq = {
                 name = 'Deja Vu?',
@@ -273,7 +344,15 @@ return {
                     "each hand gives {C:money}$3{}",
                 }
             },
-        }
+        },
+        BakeryCharm = {
+			BakeryCharm_soe_sealcharm={
+				name = "Seal Charm",
+                text = {
+                    "Vanilla seal effects are doubled"
+                }
+			},
+		},
     },
     misc = {
         achievement_descriptions={
@@ -287,15 +366,27 @@ return {
         collabs={},
         dictionary={
             k_soe_infinity = "Infinity",
+
+            soe_hand_joker_central = "Joker Central",
         },
         high_scores={},
         labels={
             soe_sealseal_seal = 'Seal Seal',
+            soe_rainbowseal_seal = 'Rainbow Seal',
+            soe_reverseseal_seal = 'Reverse Seal',
+            soe_negativeseal_seal = 'Negative Seal',
+            soe_carmineseal_seal = 'Carmine Seal',
+            soe_aquaseal_seal = 'Aqua Seal',
 
             k_soe_infinity = "Infinity",
         },
-        poker_hand_descriptions={},
-        poker_hands={},
+        poker_hand_descriptions = {
+            soe_joker_central = {"5 Jokers"}
+        },
+        poker_hands = {
+            soe_joker_central = "Joker Central",
+        },
+
         quips={
             again = {
                 "Again!"
