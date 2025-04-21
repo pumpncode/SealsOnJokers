@@ -2479,7 +2479,7 @@ SMODS.Joker{
         }
     },
     loc_vars = function(self, info_queue, card)
-        return {vars = {card.ability.extra.xmult}}
+        return {vars = {card.ability.extra.xmult, card.ability.extra.weightmult}}
     end,
     calculate = function(self, card, context)
         if (context.other_joker and context.other_joker.edition and context.other_joker.edition.key == 'e_negative') or (context.other_consumeable and context.other_consumeable.edition and context.other_consumeable.edition.key == 'e_negative') or (context.individual and context.other_card.edition and context.other_card.edition.key == 'e_negative' and not context.end_of_round) then

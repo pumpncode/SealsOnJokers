@@ -88,7 +88,7 @@ return {
             j_soe_blankjoker = {
                 name = 'Blank Joker',
                 text={
-                    "In #1# rounds, turn into",
+                    "In {C:attention}#1#{} rounds, turn into",
                     "{C:dark_edition}Antimatter Joker{}",
                 }
             },
