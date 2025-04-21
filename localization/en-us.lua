@@ -97,7 +97,7 @@ return {
                 text={
                     "{C:attention}ALL{} {C:dark_edition}Negative{} cards",
                     "give {X:mult,C:white}X#1#{} Mult",
-                    "and {C:dark_edition}Negative is #2#X as often to appear"
+                    "and {C:dark_edition}Negative{} is {C:dark_edition}#2#X{} as often to appear"
                 }
             },
             j_soe_jupiterjoker = {
