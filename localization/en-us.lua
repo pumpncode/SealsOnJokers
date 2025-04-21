@@ -108,6 +108,14 @@ return {
                     "Upgrade played hand",
                 }
             },
+            j_soe_talismanjoker = {
+                name = 'Talisman Joker',
+                text={
+                    "Gives a random scoring card",
+                    "A {C:attention}Gold Seal{}",
+                    "{C:inactive}(if possible){}",
+                }
+            },
         },
         Other={
             soe_sealseal_seal = {
