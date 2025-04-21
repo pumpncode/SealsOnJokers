@@ -159,12 +159,14 @@ end
 '''
 position = "after"
 payload = '''
-if ret and _card.seal == "Red" then
-    SMODS.calculate_effect({message = localize('k_again_ex'), card = _card}, _card)
-    i = i+1
-    add_round_eval_row({dollars = ret, bonus = true, name='joker'..i, pitch = pitch, card = _card})
-    pitch = pitch + 0.06
-    dollars = dollars + ret
+if ret and _card.seal == "Red" and _card.redsealcount then
+    for i = 1, _card.redsealcount do
+        SMODS.calculate_effect({message = localize('k_again_ex'), card = _card}, _card)
+        i = i+1
+        add_round_eval_row({dollars = ret, bonus = true, name='joker'..i, pitch = pitch, card = _card})
+        pitch = pitch + 0.06
+        dollars = dollars + ret
+    end
 end
 '''
 match_indent = true

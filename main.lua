@@ -1252,9 +1252,9 @@ SMODS.Consumable {
 	end,
 }
 
-function string.starts(String,Start)
-    return string.sub(String,1,string.len(Start))==Start
- end 
+function string.starts(string, start)
+    return string.sub(string, 1, string.len(start)) == start
+end
 
 local oldsave = Card.save
 function Card:save()
@@ -2190,6 +2190,113 @@ SMODS.Joker{
     end
 }
 
+--[[
+SMODS.Joker{
+    name = 'Seeder',
+    key = 'seeder',
+    atlas = 'Placeholders',
+    pos = {x = 2, y = 0},
+    rarity = 3,
+    cost = 15,
+    unlocked = true,
+    discovered = true,
+    blueprint_compat = false,
+    eternal_compat = true,
+    perishable_compat = true,
+    config = {
+        extra = {
+            seed = "2K9H9HN",
+            runnable = true
+        }
+    },
+    loc_vars = function(self,info_queue,card)
+        return {vars = {card.ability.extra.seed}}
+    end,
+    calculate = function(self, card, context)
+        if context.end_of_round and context.main_eval and context.game_over == false and G.GAME.blind.boss then
+            if not card.ability.extra.runnable then
+                card.ability.extra.runnable = true
+                return {
+                    message = localize('k_reset'),
+                }
+            end
+        end
+        if context.using_consumeable and card.ability.extra.runnable then
+            G.ENTERED_SEED = ""
+            G.E_MANAGER:add_event(Event({
+				blockable = false,
+				func = function()
+					G.REFRESH_ALERTS = true
+					return true
+				end,
+			}))
+			G.UIBOXGENERICOPTIONSREALLYSEED = create_UIBox_generic_options({
+				no_back = true,
+				colour = HEX("04200c"),
+				outline_colour = G.C.SECONDARY_SET.Code,
+				contents = {
+					{
+						n = G.UIT.R,
+						nodes = {
+							create_text_input({
+								colour = G.C.SET.Code,
+								hooked_colour = darken(copy_table(G.C.SET.Code), 0.3),
+								w = 4.5,
+								h = 1,
+								max_length = 8,
+								extended_corpus = true,
+								prompt_text = "ENTER A SEED",
+								ref_table = G,
+								ref_value = "ENTERED_SEED",
+								keyboard_offset = 1,
+							}),
+						},
+					},
+					{
+						n = G.UIT.R,
+						config = { align = "cm" },
+						nodes = {
+							UIBox_button({
+								colour = G.C.SET.Code,
+								button = "seed_apply",
+								label = {"SEED"},
+								minw = 4.5,
+								focus_args = { snap_to = true },
+							}),
+						},
+					},
+				},
+			})
+            G.UIBOXFORSEED = UIBox({
+                definition = G.UIBOXGENERICOPTIONSREALLYSEED,
+                config = {
+                    align = "cm",
+                    offset = { x = 0, y = 10 },
+                    major = G.ROOM_ATTACH,
+                    bond = "Weak",
+                    instance_type = "POPUP",
+                },
+            })
+            G.UIBOXFORSEED.alignment.offset.y = 0
+            G.ROOM.jiggle = G.ROOM.jiggle + 1
+            G.UIBOXFORSEED:align_to_major()
+            G.FUNCS.seed_apply = function()
+                G.ENTERED_SEED = string.upper(G.ENTERED_SEED) or "r"
+                card.ability.extra.runnable = false
+                card.ability.extra.seed = G.ENTERED_SEED
+                G.GAME.pseudorandom.seed = G.ENTERED_SEED
+                G.GAME.pseudorandom.hashed_seed = pseudohash(G.GAME.pseudorandom.seed)
+                G.UIBOXFORSEED:remove()
+            end
+        end
+    end,
+    in_pool = function(self)
+        return false
+    end
+}
+]]
+
+--[[
 if Bakery_API and Bakery_API.Charm then
     Bakery_API.Charm {
         key = 'sealcharm',
@@ -2209,6 +2316,7 @@ if Bakery_API and Bakery_API.Charm then
         end, -- Called when a new charm is purchased that replaces this one
     }
 end
+]]
 
 SMODS.Joker{
     name = 'JupiterJoker',
@@ -2333,6 +2441,9 @@ SMODS.Joker{
             roundsleft = 20
         }
     },
+    loc_vars = function(self, info_queue)
+        return {vars = {self.ability.extra.roundsleft}}
+    end,
     calculate = function(self, card, context)
         if context.end_of_round and context.main_eval then
             card.ability.extra.roundsleft = card.ability.extra.roundsleft - 1
@@ -2364,9 +2475,12 @@ SMODS.Joker{
     config = {
         extra = {
             weightmult = 305,
-            xmult = 1.15
+            xmult = 1.2
         }
     },
+    loc_vars = function(self, info_queue)
+        return {vars = {self.ability.extra.xmult}}
+    end,
     calculate = function(self, card, context)
         if (context.other_joker and context.other_joker.edition and context.other_joker.edition.key == 'e_negative') or (context.other_consumeable and context.other_consumeable.edition and context.other_consumeable.edition.key == 'e_negative') or (context.individual and context.other_card.edition and context.other_card.edition.key == 'e_negative' and not context.end_of_round) then
             return {

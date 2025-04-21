@@ -77,6 +77,37 @@ return {
                     "it gives {X:mult,C:white}X#1#{} Mult",
                 }
             },
+            j_soe_seeder = {
+                name = 'Seeder',
+                text={
+                    "Change the current runs {C:attention}seed{}",
+                    "once per ante",
+                    "{C:inactive}(#1#){}"
+                }
+            },
+            j_soe_blankjoker = {
+                name = 'Blank Joker',
+                text={
+                    "In #1# rounds, turn into",
+                    "{C:dark_edition}Antimatter Joker{}",
+                }
+            },
+            j_soe_antimatterjoker = {
+                name = 'Antimatter Joker',
+                text={
+                    "{C:attention}ALL{} {C:dark_edition}Negative{} cards",
+                    "give {X:mult,C:white}X#1#{} Mult",
+                    "and {C:dark_edition}Negative is #2#X as often to appear"
+                }
+            },
+            j_soe_jupiterjoker = {
+                name = 'Jupiter Joker',
+                text={
+                    "If played {C:attention}poker hand{} is",
+                    "{C:attention}Flush{}",
+                    "Upgrade played hand",
+                }
+            },
         },
         Other={
             soe_sealseal_seal = {
