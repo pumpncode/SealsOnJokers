@@ -144,3 +144,27 @@ pattern = 'for _, v in ipairs(info_queue) do'
 position = "before"
 payload = 'if _c.legallyplasmasleeve then info_queue[#info_queue+1] = {key = "legallyplasmasleeve", set = "Other"} end'
 match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "functions/state_events.lua"
+pattern = '''
+-- TARGET: calc_dollar_bonus per card
+if ret then
+    i = i+1
+    add_round_eval_row({dollars = ret, bonus = true, name='joker'..i, pitch = pitch, card = _card})
+    pitch = pitch + 0.06
+    dollars = dollars + ret
+end
+'''
+position = "after"
+payload = '''
+if ret and _card.seal == "Red" then
+    SMODS.calculate_effect({message = localize('k_again_ex'), card = _card}, _card)
+    i = i+1
+    add_round_eval_row({dollars = ret, bonus = true, name='joker'..i, pitch = pitch, card = _card})
+    pitch = pitch + 0.06
+    dollars = dollars + ret
+end
+'''
+match_indent = true

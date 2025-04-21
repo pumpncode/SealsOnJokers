@@ -266,7 +266,6 @@ SMODS.Consumable{
                 func = function()
                     if highlighted then
                         highlighted:set_seal("Blue")
-                        highlighted.ability.legallygold = true
                     end
                     return true
                 end,
@@ -486,7 +485,7 @@ SMODS.Consumable{
     can_use = function(self,card)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
-            if not v.ability.legal then
+            if not v.ability.legallyenhanced then
                 eligible[#eligible + 1] = v
             end
         end
@@ -495,7 +494,7 @@ SMODS.Consumable{
     use = function(self,card,area,copier)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
-            if not v.ability.legal then
+            if not v.ability.legallyenhanced then
                 eligible[#eligible + 1] = v
             end
         end
@@ -513,8 +512,7 @@ SMODS.Consumable{
                 delay = 0.1,
                 func = function()
                     if highlighted then
-                        highlighted.ability.legallygold = true
-                        highlighted.ability.legal = true
+                        highlighted.ability.legallyenhanced = "Gold"
                     end
                     return true
                 end,
@@ -533,7 +531,7 @@ SMODS.Consumable{
     can_use = function(self,card)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
-            if not v.ability.legal then
+            if not v.ability.legallyenhanced then
                 eligible[#eligible + 1] = v
             end
         end
@@ -542,7 +540,7 @@ SMODS.Consumable{
     use = function(self,card,area,copier)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
-            if not v.ability.legal then
+            if not v.ability.legallyenhanced then
                 eligible[#eligible + 1] = v
             end
         end
@@ -561,7 +559,7 @@ SMODS.Consumable{
                 func = function()
                     if highlighted then
                         highlighted:set_ability(G.P_CENTERS.j_soe_stonecardjoker)
-                        highlighted.ability.legal = true
+                        highlighted.ability.legallyenhanced = "Stone"
                     end
                     return true
                 end,
@@ -580,7 +578,7 @@ SMODS.Consumable{
     can_use = function(self,card)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
-            if not v.ability.legal then
+            if not v.ability.legallyenhanced then
                 eligible[#eligible + 1] = v
             end
         end
@@ -589,7 +587,7 @@ SMODS.Consumable{
     use = function(self,card,area,copier)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
-            if not v.ability.legal then
+            if not v.ability.legallyenhanced then
                 eligible[#eligible + 1] = v
             end
         end
@@ -607,8 +605,7 @@ SMODS.Consumable{
                 delay = 0.1,
                 func = function()
                     if highlighted then
-                        highlighted.ability.legallysteel = true
-                        highlighted.ability.legal = true
+                        highlighted.ability.legallyenhanced = "Steel"
                     end
                     return true
                 end,
@@ -627,7 +624,7 @@ SMODS.Consumable{
     can_use = function(self,card)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
-            if not v.ability.legal then
+            if not v.ability.legallyenhanced then
                 eligible[#eligible + 1] = v
             end
         end
@@ -636,7 +633,7 @@ SMODS.Consumable{
     use = function(self,card,area,copier)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
-            if not v.ability.legal then
+            if not v.ability.legallyenhanced then
                 eligible[#eligible + 1] = v
             end
         end
@@ -654,8 +651,7 @@ SMODS.Consumable{
                 delay = 0.1,
                 func = function()
                     if highlighted then
-                        highlighted.ability.legallymult = true
-                        highlighted.ability.legal = true
+                        highlighted.ability.legallyenhanced = "Mult"
                     end
                     return true
                 end,
@@ -674,7 +670,7 @@ SMODS.Consumable{
     can_use = function(self,card)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
-            if not v.ability.legal then
+            if not v.ability.legallyenhanced then
                 eligible[#eligible + 1] = v
             end
         end
@@ -683,7 +679,7 @@ SMODS.Consumable{
     use = function(self,card,area,copier)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
-            if not v.ability.legal then
+            if not v.ability.legallyenhanced then
                 eligible[#eligible + 1] = v
             end
         end
@@ -701,8 +697,7 @@ SMODS.Consumable{
                 delay = 0.1,
                 func = function()
                     if highlighted then
-                        highlighted.ability.legallybonus = true
-                        highlighted.ability.legal = true
+                        highlighted.ability.legallyenhanced = "Bonus"
                     end
                     return true
                 end,
@@ -721,7 +716,7 @@ SMODS.Consumable{
     can_use = function(self,card)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
-            if not v.ability.legal then
+            if not v.ability.legallyenhanced then
                 eligible[#eligible + 1] = v
             end
         end
@@ -730,7 +725,7 @@ SMODS.Consumable{
     use = function(self,card,area,copier)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
-            if not v.ability.legal then
+            if not v.ability.legallyenhanced then
                 eligible[#eligible + 1] = v
             end
         end
@@ -748,8 +743,7 @@ SMODS.Consumable{
                 delay = 0.1,
                 func = function()
                     if highlighted then
-                        highlighted.ability.legallylucky = true
-                        highlighted.ability.legal = true
+                        highlighted.ability.legallyenhanced = "Lucky"
                     end
                     return true
                 end,
@@ -768,7 +762,7 @@ SMODS.Consumable{
     can_use = function(self,card)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
-            if not v.ability.legal then
+            if not v.ability.legallyenhanced then
                 eligible[#eligible + 1] = v
             end
         end
@@ -777,7 +771,7 @@ SMODS.Consumable{
     use = function(self,card,area,copier)
         local eligible = {}
         for k, v in pairs(G.jokers.cards) do
-            if not v.ability.legal then
+            if not v.ability.legallyenhanced then
                 eligible[#eligible + 1] = v
             end
         end
@@ -795,8 +789,7 @@ SMODS.Consumable{
                 delay = 0.1,
                 func = function()
                     if highlighted then
-                        highlighted.ability.legallyglass = true
-                        highlighted.ability.legal = true
+                        highlighted.ability.legallyenhanced = "Glass"
                     end
                     return true
                 end,
@@ -1511,6 +1504,43 @@ function Card:calculate_seal(context)
                 self.debuff = false
             end
         end
+        if next(SMODS.find_mod("familiar")) then
+            if self.seal == "fam_maroon_seal" then
+                if context.retrigger_joker_check and not context.retrigger_joker and context.other_card == G.jokers.cards[1] then
+                    return {
+                        repetitions = 1,
+                        card = G.jokers.cards[1]
+                    }
+                end
+            end
+            if self.seal == "fam_sapphire_seal" then
+                if context.end_of_round and context.main_eval then
+                    if G.consumeables.config.card_limit > #G.consumeables.cards then
+                        SMODS.add_card({set = 'Spectral', area = G.consumeables})
+                        SMODS.calculate_effect({message = localize('k_plus_spectral'), colour = G.C.SECONDARY_SET.Spectral, card = self}, self)
+                    end
+                end
+            end
+            if self.seal == "fam_gilded_seal" then
+                if context.post_trigger and context.other_card == self then
+                    if pseudorandom('gilded_seal') < G.GAME.probabilities.normal/4 then
+                        SMODS.calculate_effect({dollars = -5, card = self}, self)
+                        G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) - 5
+                        G.E_MANAGER:add_event(Event({func = (function() G.GAME.dollar_buffer = 0; return true end)}))
+                    else
+                        SMODS.calculate_effect({dollars = 5, card = self}, self)
+                        G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) + 5
+                        G.E_MANAGER:add_event(Event({func = (function() G.GAME.dollar_buffer = 0; return true end)}))
+                    end
+                end
+            end
+            if self.seal == "fam_familiar_seal" then
+                if context.selling_self and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+                    SMODS.add_card({set = 'Familiar_Tarots', area = G.consumeables})
+                    SMODS.calculate_effect({message = localize('k_plus_tarot'), colour = G.C.SECONDARY_SET.Tarot, card = self}, self)
+                end
+            end
+        end
         if self.extraseals then
             if table.contains(self.extraseals, "Gold") and context.post_trigger and context.other_card == self then
                 for i = 1, self.goldsealcount do
@@ -1890,7 +1920,7 @@ local oldcalcjoker = Card.calculate_joker
 function Card:calculate_joker(context)
     local g = oldcalcjoker(self, context)
     if context.end_of_round and context.cardarea == G.jokers then
-        if self.ability.legallygold then
+        if self.ability.legallyenhanced == "Gold" then
             return {
                 dollars = 3,
                 colour = G.C.MONEY,
@@ -1904,7 +1934,7 @@ function Card:calculate_joker(context)
     end
     if context.post_trigger and context.other_card == self and (context.other_context.joker_main or context.other_context.individual) then
         self.ability.triggered = true
-        if self.ability.legallymult then
+        if self.ability.legallyenhanced == "Mult" then
             return {
                 mult = 4,
                 colour = G.C.MULT,
@@ -1912,7 +1942,7 @@ function Card:calculate_joker(context)
                 message_card = self
             }
         end
-        if self.ability.legallybonus then
+        if self.ability.legallyenhanced == "Bonus" then
             return {
                 chips = 30,
                 colour = G.C.CHIPS,
@@ -1920,7 +1950,7 @@ function Card:calculate_joker(context)
                 message_card = self
             }
         end
-        if self.ability.legallylucky then
+        if self.ability.legallyenhanced == "Lucky" then
             local smult, money
             if pseudorandom('lucky') < G.GAME.probabilities.normal / 5 then
                 smult = 20
@@ -1941,7 +1971,7 @@ function Card:calculate_joker(context)
                 }
             }
         end
-        if self.ability.legallysteel then
+        if self.ability.legallyenhanced == "Steel" then
             return {
                 xmult = 1.5,
                 colour = G.C.MULT,
@@ -1949,7 +1979,7 @@ function Card:calculate_joker(context)
                 message_card = self
             }
         end
-        if self.ability.legallyglass then
+        if self.ability.legallyenhanced == "Glass" then
             return {
                 xmult = 2,
                 colour = G.C.MULT,
@@ -1959,7 +1989,7 @@ function Card:calculate_joker(context)
         end
     end
     if context.after then
-        if self.ability.legallyglass then
+        if self.ability.legallyenhanced == "Glass" then
             if pseudorandom('glass') < G.GAME.probabilities.normal / 4 then
                 G.E_MANAGER:add_event(Event({
                     trigger = 'after',
@@ -1974,7 +2004,7 @@ function Card:calculate_joker(context)
     end
     if context.joker_main and context.cardarea == G.jokers then
         if not true then
-            if self.ability.legallymult then
+            if self.ability.legallyenhanced == "Mult" then
                 return {
                     mult = 4,
                     colour = G.C.MULT,
@@ -1982,7 +2012,7 @@ function Card:calculate_joker(context)
                     message_card = self
                 }
             end
-            if self.ability.legallybonus then
+            if self.ability.legallyenhanced == "Bonus" then
                 return {
                     chips = 30,
                     colour = G.C.CHIPS,
@@ -1990,7 +2020,7 @@ function Card:calculate_joker(context)
                     message_card = self
                 }
             end
-            if self.ability.legallylucky then
+            if self.ability.legallyenhanced == "Lucky" then
                 local smult, money
                 if pseudorandom('lucky') < G.GAME.probabilities.normal / 5 then
                     smult = 20
@@ -2011,7 +2041,15 @@ function Card:calculate_joker(context)
                     }
                 }
             end
-            if self.ability.legallyglass then
+            if self.ability.legallyenhanced == "Steel" then
+                return {
+                    xmult = 1.5,
+                    colour = G.C.MULT,
+                    card = self,
+                    message_card = self
+                }
+            end
+            if self.ability.legallyenhanced == "Glass" then
                 return {
                     xmult = 2,
                     colour = G.C.MULT,
@@ -2236,6 +2274,45 @@ SMODS.Joker{
             end
         end
     end,
+}
+
+SMODS.Joker{
+    name = 'TheSoulJoker',
+    key = 'thesouljoker',
+    atlas = 'Tarots',
+    pos = {x = 2, y = 2},
+    rarity = 3,
+    cost = 10,
+    boostershader = true,
+    unlocked = true,
+    discovered = true,
+    blueprint_compat = true,
+    eternal_compat = true,
+    perishable_compat = true,
+    calculate = function(self, card, context)
+        if context.before then
+            return {
+                message = localize('k_nope_ex'),
+                card = card,
+            }
+        end
+    end,
+}
+
+SMODS.DrawStep{
+    key = 'thesoulpos',
+    order = 20,
+    func = function(self)
+        if self.config.center.key == 'thesouljoker' then
+            local scale_mod = 0.05 + 0.05*math.sin(1.8*G.TIMERS.REAL) + 0.07*math.sin((G.TIMERS.REAL - math.floor(G.TIMERS.REAL))*math.pi*14)*(1 - (G.TIMERS.REAL - math.floor(G.TIMERS.REAL)))^3
+            local rotate_mod = 0.1*math.sin(1.219*G.TIMERS.REAL) + 0.07*math.sin((G.TIMERS.REAL)*math.pi*5)*(1 - (G.TIMERS.REAL - math.floor(G.TIMERS.REAL)))^2
+            
+            local sprite = Sprite(self.T.x, self.T.y, self.T.w, self.T.h, G.ASSET_ATLAS["soe_Enhancers"], {x = 0, y = 1})
+            sprite.role.draw_major = self
+            sprite:draw_shader('dissolve',0, nil, nil, self.children.center,scale_mod, rotate_mod,nil, 0.1 + 0.03*math.sin(1.8*G.TIMERS.REAL),nil, 0.6)
+            sprite:draw_shader('dissolve', nil, nil, nil, self.children.center, scale_mod, rotate_mod)
+        end
+    end
 }
 
 SMODS.Joker{
@@ -3022,9 +3099,9 @@ end
 local oldupdate = Card.update
 function Card:update(dt)
     if (G.GAME.selected_back and G.GAME.selected_back.effect and G.GAME.selected_back.effect.center and G.GAME.selected_back.effect.center.key == 'b_soe_seal') or (G.GAME.selected_sleeve and G.GAME.selected_sleeve == 'sleeve_soe_seal') then
-        local seals = {'Red', 'Blue', 'Gold', 'Purple'}
-        if cryptidyeohna then
-            table.insert(seals, {'cry_azure', 'cry_green'})
+        local seals = {}
+        for k, v in pairs(G.P_SEALS) do
+            table.insert(seals, k)
         end
         if G.shop_jokers and G.shop_jokers.cards and G.shop_jokers.cards[1] then
             for k, v in ipairs(G.shop_jokers.cards) do
@@ -3141,18 +3218,45 @@ SMODS.DrawStep{
     end
 }
 
+--[[
+local secondsealsprite 
 SMODS.DrawStep{
     key = 'secondsealsforall',
     order = 11,
     func = function(self, card)
         if self.extraseal == 'Red' and not (#SMODS.find_card("j_soe_sealjoker") > 0) then
-            local sprite = Sprite(self.T.x, self.T.y, self.T.w, self.T.h, G.ASSET_ATLAS['soe_SecondSeals'], { x = 5, y = 4 })
+            secondsealsprite = secondsealsprite or Sprite(self.T.x, self.T.y, self.T.w, self.T.h, G.ASSET_ATLAS['soe_SecondSeals'], { x = 5, y = 4 })
+            secondsealsprite.role.draw_major = self
+            secondsealsprite:draw_shader('dissolve', nil, nil, nil, self.children.center)
+        end
+    end,
+    conditions = {vortex = false, facing = 'front'},
+}
+
+local bonussprite, multsprite, wildsprite
+SMODS.DrawStep{
+    key = 'threeenhancementsforjokers',
+    order = 10,
+    func = function(self, card)
+        if self.ability.legallyenhanced == 'Bonus' then
+            bonussprite = bonussprite or Sprite(self.T.x, self.T.y, self.T.w, self.T.h, G.ASSET_ATLAS['soe_Enhancers'], { x = 1, y = 1})
+            bonussprite.role.draw_major = self
+            bonussprite:draw_shader('dissolve', nil, nil, nil, self.children.center)
+        end
+        if self.ability.legallyenhanced == 'Mult' then
+            local sprite = Sprite(self.T.x, self.T.y, self.T.w, self.T.h, G.ASSET_ATLAS['soe_Enhancers'], { x = 2, y = 1})
+            sprite.role.draw_major = self
+            sprite:draw_shader('dissolve', nil, nil, nil, self.children.center)
+        end
+        if self.ability.legallyenhanced == 'Wild' then
+            local sprite = Sprite(self.T.x, self.T.y, self.T.w, self.T.h, G.ASSET_ATLAS['soe_Enhancers'], { x = 3, y = 1})
             sprite.role.draw_major = self
             sprite:draw_shader('dissolve', nil, nil, nil, self.children.center)
         end
     end,
     conditions = {vortex = false, facing = 'front'},
 }
+]]
 
 function table.contains(table, element)
     if table and type(table) == "table" then
@@ -3297,25 +3401,25 @@ SMODS.Keybind{
     action = function(self)
         if G.jokers and G.jokers.highlighted and #G.jokers.highlighted == 1 then
             local joker = G.jokers.highlighted[1]
-            if not joker.ability.legal then
+            if not joker.ability.legallyenhanced then
                 print('Highlighted joker is not enhanced')
             end
-            if joker.ability.legallygold then
+            if joker.ability.legallyenhanced == "Gold" then
                 print('Highlighted joker is enhanced with gold')
             end
-            if joker.ability.legallysteel then
+            if joker.ability.legallyenhanced == "Steel" then
                 print('Highlighted joker is enhanced with steel')
             end
-            if joker.ability.legallymult then
+            if joker.ability.legallyenhanced == "Mult" then
                 print('Highlighted joker is enhanced with mult')
             end
-            if joker.ability.legallybonus then
+            if joker.ability.legallyenhanced == "Bonus" then
                 print('Highlighted joker is enhanced with bonus')
             end
-            if joker.ability.legallylucky then
+            if joker.ability.legallyenhanced == "Lucky" then
                 print('Highlighted joker is enhanced with lucky')
             end
-            if joker.ability.legallyglass then
+            if joker.ability.legallyenhanced == "Glass" then
                 print('Highlighted joker is enhanced with glass')
             end
             if joker.ability.name == 'StoneCardJoker' then
