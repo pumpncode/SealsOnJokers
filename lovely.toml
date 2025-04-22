@@ -168,5 +168,8 @@ if ret and _card.seal == "Red" and _card.redsealcount then
         dollars = dollars + ret
     end
 end
+if ret and _card.seal == "Gold" then
+    SMODS.calculate_effect({dollars = 3, card = _card}, _card)
+end
 '''
 match_indent = true

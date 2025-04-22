@@ -100,14 +100,6 @@ return {
                     "and {C:dark_edition}Negative{} is {X:dark_edition,C:white}#2#X{} as often to appear"
                 }
             },
-            j_soe_jupiterjoker = {
-                name = 'Jupiter Joker',
-                text={
-                    "If played {C:attention}poker hand{} is",
-                    "{C:attention}Flush{}",
-                    "Upgrade played hand",
-                }
-            },
             j_soe_talismanjoker = {
                 name = 'Talisman Joker',
                 text={

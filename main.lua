@@ -2318,28 +2318,43 @@ if Bakery_API and Bakery_API.Charm then
 end
 ]]
 
-SMODS.Joker{
-    name = 'JupiterJoker',
-    key = 'jupiterjoker',
-    atlas = 'Tarots',
-    pos = {x = 4, y = 3},
-    rarity = 3,
-    cost = 10,
-    unlocked = true,
-    discovered = true,
-    blueprint_compat = true,
-    eternal_compat = true,
-    perishable_compat = true,
-    calculate = function(self, card, context)
-        if context.before and context.scoring_name == "Flush" then
-            return {
-                level_up = 1,
-                card = card,
-                message = localize('k_level_up_ex'),
-            }
-        end
-    end,
-}
+for k, v in pairs(G.P_CENTERS) do
+    local name = v.name
+    if v.set == 'Planet' and v.config.hand_type then
+        SMODS.Joker{
+            key = string.lower(name) .. 'joker',
+            atlas = v.atlas or 'Tarots',
+            pos = v.pos,
+            rarity = 3,
+            loc_txt = {
+                name =  name .. ' Joker',
+                text = {
+                    "If played {C:attention}poker hand{} is",
+                    "{C:attention}#1#{}",
+                    "Upgrade played hand",
+                },
+            },
+            cost = 10,
+            unlocked = true,
+            discovered = true,
+            blueprint_compat = true,
+            eternal_compat = true,
+            perishable_compat = true,
+            loc_vars = function(self, info_queue, card)
+                return {vars = {v.config.hand_type}}
+            end,
+            calculate = function(self, card, context)
+                if context.before and context.scoring_name == v.config.hand_type then
+                    return {
+                        level_up = 1,
+                        card = card,
+                        message = localize('k_level_up_ex'),
+                    }
+                end
+            end,
+        }
+    end
+end
 
 SMODS.Joker{
     name = 'TalismanJoker',
@@ -2384,6 +2399,7 @@ SMODS.Joker{
     end,
 }
 
+--[[
 SMODS.Joker{
     name = 'TheSoulJoker',
     key = 'thesouljoker',
@@ -2406,6 +2422,7 @@ SMODS.Joker{
         end
     end,
 }
+]]
 
 SMODS.DrawStep{
     key = 'thesoulpos',
@@ -2491,6 +2508,9 @@ SMODS.Joker{
             }
         end
     end,
+    in_pool = function(self)
+        return false
+    end
 }
 
 local oldenegativegetweight = G.P_CENTERS.e_negative.get_weight
