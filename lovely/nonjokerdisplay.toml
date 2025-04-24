@@ -1,0 +1,249 @@
+[manifest]
+version = "1.0.0"
+dump_lua = true
+priority = 5
+
+[[patches]]
+[patches.pattern]
+target = '''=[SMODS JokerDisplay "src/display_functions.lua"]'''
+pattern = """
+function JokerDisplay.update_all_joker_display(force_update, force_reload, _from)"""
+position = "after"
+payload = """
+if G.hand and SEALS and SEALS.config.nonjokerdisplay then
+    for _, card in pairs(G.hand.cards) do
+        card:update_joker_display(force_update, force_reload, _from)
+    end
+end
+if G.consumeables and SEALS and SEALS.config.nonjokerdisplay and not SMODS.find_mod("MoreFluff") then
+    for _, card in pairs(G.consumeables.cards) do
+        card:update_joker_display(force_update, force_reload, _from)
+        JokerDisplay.calculate_joker_modifiers(card)
+    end
+end
+"""
+overwrite = true
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = '''=[SMODS JokerDisplay "src/config_tab.lua"]'''
+pattern = """joker:update_joker_display(false, true, "config_update")"""
+position = "after"
+payload = """
+if G.hand and SEALS and SEALS.config.nonjokerdisplay then
+    for _, card in pairs(G.hand.cards) do
+        card:update_joker_display(false, true, "config_update")
+    end
+end
+if G.consumeables and SEALS and SEALS.config.nonjokerdisplay then
+    for _, card in pairs(G.consumeables.cards) do
+        if card.ability.set == 'Planet' then
+            card:update_joker_display(false, true, "config_update")
+            JokerDisplay.calculate_joker_modifiers(card)
+        end
+    end
+end
+"""
+overwrite = true
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = '''=[SMODS JokerDisplay "src/display_functions.lua"]'''
+pattern = """
+    if self.ability and self.ability.set == 'Joker' then"""
+position = "at"
+payload = """if self.ability and (self.ability.set == 'Joker' or self.playing_card or self.area == G.consumeables) then"""
+overwrite = true
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = '''=[SMODS JokerDisplay "src/display_functions.lua"]'''
+pattern = """
+if not JokerDisplay.Definitions[self.config.center.key] and"""
+position = "before"
+payload = """
+if self.playing_card and SEALS and SEALS.config.nonjokerdisplay then
+    JokerDisplay.Definitions[self.config.center.key] = {
+        text = {
+            {text = "+", colour = G.C.CHIPS},
+            {ref_table = "card.base", ref_value = "nominal", colour = G.C.CHIPS},
+        }
+    }
+end
+"""
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = '''=[SMODS JokerDisplay "JokerDisplay.lua"]'''
+pattern = """
+JokerDisplay.Definitions = SMODS.load_file("definitions/display_definitions.lua")() or {}
+"""
+position = "after"
+payload = """
+JokerDisplay.Planet_Definitions = {}
+for k, v in pairs(G.P_CENTERS) do
+    if v.set == 'Planet' and v.config.hand_type then
+        JokerDisplay.Planet_Definitions[k] = { -- Planets
+            condition_function = function(card)
+                return not card.debuff and card.ability.set == 'Planet' and G.GAME and G.GAME.used_vouchers.v_observatory and SEALS and SEALS.config.nonjokerdisplay
+            end,
+            mod_function = function(card)
+                local text = JokerDisplay.evaluate_hand()
+                if text == card.ability.hand_type then
+                    return{x_mult = G.P_CENTERS.v_observatory.config.extra ^ (card.ability.qty or 1)}
+                else
+                    return{x_mult = 1}
+                end
+            end
+        }
+    end
+end
+"""
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = '''=[SMODS JokerDisplay "JokerDisplay.lua"]'''
+pattern = """
+JokerDisplay.Edition_Definitions = SMODS.load_file("definitions/edition_definitions.lua")() or {}"""
+position = "after"
+payload = """
+JokerDisplay.Enhancement_Definitions = {
+    m_mult = { -- Mult
+        condition_function = function(card)
+            return not card.debuff and card.config.center.key == 'm_mult' and SEALS and SEALS.config.nonjokerdisplay
+        end,
+        mod_function = function(card)
+            return {mult = 4}
+        end
+    },
+    m_bonus = { -- Bonus
+        condition_function = function(card)
+            return not card.debuff and card.config.center.key == 'm_bonus' and SEALS and SEALS.config.nonjokerdisplay
+        end,
+        mod_function = function(card)
+            return {chips = 30}
+        end
+    },
+    m_glass = { -- Glass
+        reminder_text = {
+            { text = "(" },
+            { ref_table = "G.GAME.probabilities", ref_value = "normal", colour = G.C.GREEN },
+            { text = " in ", colour = G.C.GREEN },
+            { ref_table = "card.ability", ref_value = "extra", colour = G.C.GREEN },
+            { text = ")" },
+        },
+        condition_function = function(card)
+            return not card.debuff and card.config.center.key == 'm_glass' and SEALS and SEALS.config.nonjokerdisplay
+        end,
+        mod_function = function(card)
+            return {x_mult = 2}
+        end
+    },
+}
+"""
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = '''=[SMODS JokerDisplay "src/api_helper_functions.lua"]'''
+pattern = """
+for _, edition in pairs(JokerDisplay.Edition_Definitions) do"""
+position = "before"
+payload = """
+for _, enhancement in pairs(JokerDisplay.Enhancement_Definitions) do
+    if enhancement.condition_function(card) and SEALS and SEALS.config.nonjokerdisplay then
+        local definition_reminder_text = enhancement.reminder_text or enhancement.line_2
+        if definition_reminder_text then
+            card.children.joker_display:remove_reminder_text()
+            card.children.joker_display_small:remove_reminder_text()
+            if not reminder_text_config then
+                reminder_text_config = {}
+            end
+            reminder_text_config.colour = reminder_text_config.colour or G.C.UI.TEXT_INACTIVE
+            reminder_text_config.scale = reminder_text_config.scale or 0.3
+            if JokerDisplay.config.default_rows.reminder then
+                if custom_parent then
+                    custom_parent.children.joker_display:add_reminder_text(definition_reminder_text, reminder_text_config,
+                        card)
+                else
+                    card.children.joker_display:add_reminder_text(definition_reminder_text, reminder_text_config)
+                end
+            end
+            if JokerDisplay.config.small_rows.reminder then
+                if custom_parent then
+                    custom_parent.children.joker_display_small:add_reminder_text(definition_reminder_text,
+                        reminder_text_config, card)
+                else
+                    card.children.joker_display_small:add_reminder_text(definition_reminder_text, reminder_text_config)
+                end
+            end
+        end
+        local enhancement_mods = enhancement.mod_function(card)
+        modifiers = {
+            chips = (modifiers.chips and enhancement_mods.chips and modifiers.chips + enhancement_mods.chips) or
+                enhancement_mods.chips or modifiers.chips,
+            x_chips = (modifiers.x_chips and enhancement_mods.x_chips and modifiers.x_chips * enhancement_mods.x_chips) or
+                enhancement_mods.x_chips or modifiers.x_chips,
+            mult = (modifiers.mult and enhancement_mods.mult and modifiers.mult + enhancement_mods.mult) or
+                enhancement_mods.mult or modifiers.mult,
+            x_mult = (modifiers.x_mult and enhancement_mods.x_mult and modifiers.x_mult * enhancement_mods.x_mult) or
+                enhancement_mods.x_mult or modifiers.x_mult,
+            dollars = (modifiers.dollars and enhancement_mods.dollars and modifiers.dollars + enhancement_mods.dollars) or
+                enhancement_mods.dollars or modifiers.dollars,
+            e_mult = (modifiers.e_mult and enhancement_mods.e_mult and modifiers.e_mult ^ enhancement_mods.e_mult) or
+                enhancement_mods.e_mult or modifiers.e_mult,
+        }
+    end
+end
+for _, planet in pairs(JokerDisplay.Planet_Definitions) do
+    if planet.condition_function(card) then
+        local planet_mods = planet.mod_function(card)
+        modifiers = {
+            x_mult = planet_mods.x_mult
+        }
+    end
+end
+"""
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = '''=[SMODS JokerDisplay "src/display_functions.lua"]'''
+pattern = """if JokerDisplay.config.enabled and G.jokers and self.area == G.jokers then"""
+position = "at"
+payload = """if JokerDisplay.config.enabled and ((G.jokers and self.area == G.jokers) or (((G.hand and self.area == G.hand) or (G.consumeables and self.area == G.consumeables)) and SEALS and SEALS.config.nonjokerdisplay)) then"""
+overwrite = true
+match_indent = false
+
+[[patches]]
+[patches.pattern]
+target = '''=[SMODS JokerDisplay "src/display_functions.lua"]'''
+pattern = """elseif self.joker_display_values and G.real_dt > 0.05 and #G.jokers.cards > 20 then"""
+position = "at"
+payload = """elseif self.joker_display_values and G.real_dt > 0.05 and (#G.jokers.cards > 20 or ((#G.hand.cards > 20 or #G.consumeables.cards > 20) and SEALS and SEALS.config.nonjokerdisplay)) then"""
+overwrite = true
+match_indent = false
+
+[[patches]]
+[patches.pattern]
+target = '''=[SMODS JokerDisplay "src/display_functions.lua"]'''
+pattern = """
+    if self.ability and (self.ability.set == 'Joker' or self.ability.set == 'Colour') then"""
+position = "at"
+payload = """if self.ability and (self.ability.set == 'Joker' or self.playing_card or self.area == G.consumeables) then"""
+overwrite = true
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = '''=[SMODS JokerDisplay "src/display_functions.lua"]'''
+pattern = """if JokerDisplay.config.enabled and ((G.jokers and self.area == G.jokers) or (G.consumeables and self.area == G.consumeables)) then"""
+position = "at"
+payload = """if JokerDisplay.config.enabled and ((G.jokers and self.area == G.jokers) or ((G.hand and self.area == G.hand) and SEALS and SEALS.config.nonjokerdisplay) or (G.consumeables and self.area == G.consumeables)) then"""
+overwrite = true
+match_indent = false

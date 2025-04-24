@@ -131,10 +131,15 @@ SMODS.Atlas{
     py = 34
 }
 
-SMODS.current_mod.optional_features = function()
+SEALS = SMODS.current_mod
+
+SEALS.optional_features = function()
     return {
         retrigger_joker = true,
         post_trigger = true,
+        cardareas = {
+            discard = true
+        }
     }
 end
 
@@ -171,6 +176,33 @@ function win_game()
         set_card_win()
     end
     return oldwingame()
+end
+
+local function juice_up_game()
+    local animtimer = 50
+    while animtimer > 0 do
+        x, y, displayindex = love.window.getPosition()
+        d_width, d_height = love.window.getDesktopDimensions( displayindex )
+        w_width, w_height, flags = love.window.getMode( )
+        animtimer = animtimer - 0.5
+        m_width = d_width - w_width
+        m_height = d_height - w_height
+        if not flags.fullscreen then
+            love.window.setPosition( (math.sin( animtimer ) + 1) / 7 * (m_width - 224) + 112, (math.cos( animtimer ) + 1) / 7 * (m_height - 224) + 112)
+        end
+    end
+end
+
+local oldcardareainit = CardArea.init
+function CardArea:init(X, Y, W, H, config)
+    local r = oldcardareainit(self, X, Y, W, H, config)
+    if not config.temporary and not config.collection then
+        if not SEALS.all_card_areas then
+            SEALS.all_card_areas = {}
+        end
+        table.insert(SEALS.all_card_areas,self)
+    end
+    return r
 end
 
 SMODS.Consumable{
@@ -1672,13 +1704,6 @@ end
 
 oldsetseal = Card.set_seal
 function Card:set_seal(_seal, silent, immediate)
-    if G.jokers and G.jokers.cards and G.jokers.cards[1] and _seal then
-        for k, joker in pairs(G.jokers.cards) do
-            if joker.config.center.key == 'j_soe_infinity' then
-                joker.ability.extra.EXmult = joker.ability.extra.EXmult + 1
-            end
-        end
-    end
     if _seal then
         self[string.lower(_seal)..'sealcount'] = (self[string.lower(_seal)..'sealcount'] or 0) + 1
     end
@@ -2795,23 +2820,112 @@ else
     infinityrarity = 'soe_infinity'
 end
 
+if Cryptid.random_consumable then
+    SEALS.randomconsumeable = Cryptid.random_consumable
+else
+    function SEALS.randomconsumeable(seed, excluded_flags, banned_card, pool, no_undiscovered)
+        -- set up excluded flags - these are the kinds of consumables we DON'T want to have generating
+        excluded_flags = excluded_flags or { "hidden", "no_doe", "no_grc" }
+        local selection = "n/a"
+        local passes = 0
+        local tries = 500
+        while true do
+            tries = tries - 1
+            passes = 0
+            -- create a random consumable naively
+            local key = pseudorandom_element(pool or G.P_CENTER_POOLS.Consumeables, pseudoseed(seed or "grc")).key
+            selection = G.P_CENTERS[key]
+            -- check if it is valid
+            if selection.discovered or not no_undiscovered then
+                for k, v in pairs(excluded_flags) do
+                    if not selection.config.center[v] then
+                        --Makes the consumable invalid if it's a specific card unless it's set to
+                        --I use this so cards don't create copies of themselves (eg potential inf Blessing chain, Hammerspace from Hammerspace...)
+                        if not banned_card or (banned_card and banned_card ~= key) then
+                            passes = passes + 1
+                        end
+                    end
+                end
+            end
+            if passes >= #excluded_flags or tries <= 0 then
+                if tries <= 0 and no_undiscovered then
+                    return G.P_CENTERS["c_strength"]
+                else
+                    return selection
+                end
+            end
+        end
+    end
+end
+
+
+
 SMODS.Joker{
-    name = 'Infinity',
-    key = 'infinity',
+    name = 'TheInfinitySeal',
+    key = 'theinfinityseal',
     atlas = 'Placeholders',
     pos = {x = 0, y = 1},
-    soul_pos = {x = 5, y = 0,},
     rarity = infinityrarity,
     cost = 2147483647,
+    config = {
+        extra = {
+            dollars = 30,
+            retriggers = 3,
+            negativeblackholes = 2,
+            negativeconsumables = 3
+        }
+    },
     unlocked = true,
     discovered = true,
     blueprint_compat = false,
     eternal_compat = true,
+    dangerous = true,
     perishable_compat = false,
-    calculate = function(self, card, context)
+    loc_vars = function(self,info_queue,card)
+        info_queue[#info_queue+1] = G.P_CENTERS.c_black_hole
+        return {vars = {card.ability.extra.dollars, card.ability.extra.retriggers, card.ability.extra.negativeblackholes, card.ability.extra.negativeconsumables, colours = {sealoverlords}}}
     end,
-    update = function (self, card, dt)
-    end
+    calculate = function(self, card, context)
+        if (context.individual and (context.cardarea == G.play or context.cardarea == G.hand)) or context.other_joker or context.other_consumeable then
+            G.E_MANAGER:add_event(Event({
+                trigger = "before",
+                delay = 0.0,
+                func = function()
+                    for i = 1, card.ability.extra.negativeblackholes do
+                        SMODS.add_card({set = 'Spectral', area = G.consumeables, key = 'c_black_hole', edition = 'e_negative'})
+                    end
+                    for i = 1, card.ability.extra.negativeconsumables do
+                        local forced_key = SEALS.randomconsumeable("theinfinityseal"..i)
+                        SMODS.add_card({set = 'Consumeables', area = G.consumeables, key = forced_key.key, edition = 'e_negative'})
+                    end
+                    return true
+                end,
+            }))
+            return {
+                dollars = card.ability.extra.dollars,
+                colour = G.C.MONEY,
+                card = context.other_card,
+            }
+        end
+        if context.repetition then
+            return {
+                message = localize('k_again_ex'),
+                repetitions = card.ability.extra.retriggers,
+                func = function()
+                    G.E_MANAGER:add_event(Event({
+                        trigger = "before",
+                        delay = 0.0,
+                        func = function()
+                            juice_up_game()
+                            return true
+                        end,
+                    }))
+                end,
+                card = card,
+            }
+        end
+    end,
+
 }
 
 SMODS.Joker{
@@ -3230,8 +3344,43 @@ function check_for_unlock(args)
 end
 ]]
 
+if SMODS.find_mod("JokerDisplay") then
+    SEALS.config_tab = function()
+        return {
+            n = G.UIT.ROOT,
+            config = {
+                align = "cl",
+                minh = G.ROOM.T.h * 0.25,
+                padding = 0.0,
+                r = 0.1,
+                colour = G.C.GREY,
+            },
+            nodes = {
+                {
+                    n = G.UIT.C,
+                    config = {
+                        align = "cm",
+                        minw = G.ROOM.T.w * 0.25,
+                        padding = 0.05,
+                    },
+                    nodes = {
+                        create_toggle({
+                            label = "Enable JokerDisplay on Non-Jokers (Quite unstable!)",
+                            ref_table = SEALS.config,
+                            ref_value = "nonjokerdisplay",
+                        }),
+                    },
+                },
+            },
+        }
+    end
+end
+
 local oldupdate = Card.update
 function Card:update(dt)
+    if not SEALS.config.nonjokerdisplay and self.joker_display_values and self.ability and self.ability.set ~= 'Joker' then
+        self.joker_display_values.disabled = true
+    end
     if (G.GAME.selected_back and G.GAME.selected_back.effect and G.GAME.selected_back.effect.center and G.GAME.selected_back.effect.center.key == 'b_soe_seal') or (G.GAME.selected_sleeve and G.GAME.selected_sleeve == 'sleeve_soe_seal') then
         local seals = {}
         for k, v in pairs(G.P_SEALS) do
