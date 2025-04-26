@@ -2820,7 +2820,7 @@ else
     infinityrarity = 'soe_infinity'
 end
 
-if Cryptid.random_consumable then
+if cryptidyeohna then
     SEALS.randomconsumeable = Cryptid.random_consumable
 else
     function SEALS.randomconsumeable(seed, excluded_flags, banned_card, pool, no_undiscovered)
