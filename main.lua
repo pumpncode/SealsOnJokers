@@ -19,6 +19,13 @@ SMODS.Atlas{
     py = 95
 }
 
+SMODS.Atlas{
+    key = 'BlueprintVouchers',
+    path = 'BlueprintVouchers.png',
+    px = 71,
+    py = 95
+}
+
 local je = SMODS.Atlas{
     key = 'JokerEnhancements',
     path = 'JokerEnhancements.png',
@@ -111,6 +118,13 @@ SMODS.Atlas{
 }
 
 SMODS.Atlas{
+    key = 'Think',
+    path = 'Think.png',
+    px = 71,
+    py = 95
+}
+
+SMODS.Atlas{
     key = 'InfinitySeals',
     path = 'InfinitySeals.png',
     px = 71,
@@ -137,9 +151,6 @@ SEALS.optional_features = function()
     return {
         retrigger_joker = true,
         post_trigger = true,
-        cardareas = {
-            discard = true
-        }
     }
 end
 
@@ -952,33 +963,17 @@ SMODS.Consumable{
     end
 }
 
-local oldstartdissolve = Card.start_dissolve
-function Card:start_dissolve(dissolve_colours, silent, dissolve_time_fac, no_juice)
-    if self.ability and self.ability.eternal and self.ability.set ~= 'Joker' then return nil end
-    return oldstartdissolve(self, dissolve_colours, silent, dissolve_time_fac, no_juice)
+local oldfuncsselfreroll = G.FUNCS.reroll_shop
+function G.FUNCS.reroll_shop()
+    oldfuncsselfreroll()
+    if G.GAME.rerollbuttonseal == "Gold" then
+        ease_dollars(3)
+    elseif G.GAME.rerollbuttonseal == "Red" then
+        oldfuncsselfreroll()
+    elseif G.GAME.rerollbuttonseal == "Blue" then
+    elseif G.GAME.rerollbuttonseal == "Purple" then
+    end
 end
-
-local oldshatter = Card.shatter
-function Card:shatter()
-    self.shattered = false
-    self.dissolve = 0
-    if self.ability and self.ability.eternal then return nil end
-    return oldshatter(self)
-end
-
-SMODS.Enhancement:take_ownership('m_glass', 
-    {
-        calculate = function(self, card, context)
-            if card.ability.eternal then
-                return nil
-            end
-            if context.destroy_card and context.cardarea == G.play and context.destroy_card == card and pseudorandom('glass') < G.GAME.probabilities.normal/card.ability.extra then
-                return { remove = true }
-            end
-        end,
-    }, 
-    true
-)
 
 SMODS.Consumable{
     key = 'murder',
@@ -1033,6 +1028,18 @@ SMODS.Consumable{
         delay(0.5)
     end
 }
+
+G.FUNCS.play_highlighted_jokers = function(e)
+    local cards = {}
+    for i = 1, #G.jokers.highlighted do
+        cards[i] = create_playing_card({front = pseudorandom_element(G.P_CARDS, pseudoseed('highjoker')), center = G.P_CENTERS["m_soe_"..G.jokers.highlighted[i].config.center.key]}, G.hand, true, nil, nil)
+        G.jokers.highlighted[i]:start_dissolve()
+    end
+    for k, v in pairs(cards) do
+        G.hand:add_to_highlighted(v)
+    end
+    G.FUNCS.play_cards_from_highlighted(e)
+end
 
 SMODS.Enhancement{
     key = "j_joker",
@@ -1121,6 +1128,259 @@ SMODS.Enhancement{
             return {mult = self.config.extra.mult}
         end
     end
+}
+
+function SEALS.score_blueprint_card(card, context, fromcard)
+    local reps = { 1 }
+    local j = 1
+    while j <= #reps do
+        if reps[j] ~= 1 then
+            local _, eff = next(reps[j])
+            if eff.retrigger_flag then SMODS.calculate_effect(eff, fromcard); j = j+1; _, eff = next(reps[j]) end
+            SMODS.calculate_effect(eff, fromcard)
+            percent = percent + percent_delta
+        end
+
+        context.main_scoring = true
+        card.getting_blueprinted = true
+        local effects = { eval_card(card, context) }
+        SMODS.calculate_quantum_enhancements(card, effects, context)
+        context.main_scoring = nil
+        context.individual = true
+        context.other_card = fromcard
+
+        if next(effects) then
+            SMODS.calculate_card_areas('jokers', context, effects, { main_scoring = true })
+            SMODS.calculate_card_areas('individual', context, effects, { main_scoring = true })
+        end
+
+        local flags = SEALS.trigger_blueprint_effects(effects, card, fromcard)
+
+        context.individual = nil
+        if reps[j] == 1 and flags.calculated then
+            context.repetition = true
+            context.card_effects = effects
+            SMODS.calculate_repetitions(card, context, reps)
+            context.repetition = nil
+            context.card_effects = nil
+        end
+        j = j + (flags.calculated and 1 or #reps)
+        context.other_card = nil
+        card.lucky_trigger = nil
+        card.getting_blueprinted = nil
+    end
+end
+
+SEALS.trigger_blueprint_effects = function(effects, card, fromcard)
+    local ret = {}
+    for i, effect_table in ipairs(effects) do
+        for key, effect in pairs(effect_table) do
+            if key ~= 'smods' then
+                if type(effect) == 'table' then
+                    local calc = SMODS.calculate_effect(effect, fromcard, key == 'edition')
+                    for k,v in pairs(calc) do ret[k] = v end
+                end
+            end
+        end
+    end
+    return ret
+end
+
+SMODS.Enhancement{
+    key = "j_blueprint",
+    loc_txt = {
+        name="Blueprint",
+        text={
+            "Copies ability of",
+            "{C:attention}Playing Card{} to the right",
+        },
+    },
+    atlas = 'JokerEnhancements',
+    pos = {x = 0, y = 3},
+    no_collection = true,
+    replace_base_card = true,
+    overrides_base_rank = true,
+    always_scores = true,
+    weight = 0,
+    in_pool = function(self)
+        return false
+    end,
+    calculate = function(self, card, context)
+        local other_card
+        if context.main_scoring then
+            for i = 1, #card.area.cards do
+                if card.area.cards[i] == card and card.area.cards[i+1] then
+                    other_card = card.area.cards[i+1]
+                end
+            end
+            if other_card then
+                local eval, post = eval_card(other_card, context)
+                if eval.playing_card then
+                    for k, v in pairs(eval.playing_card) do
+                        eval[k] = v
+                    end
+                end
+                return eval
+            end
+        end
+    end,
+    update = function(self, card, dt)
+        if G.play ~= nil then
+            if #G.play.cards ~= 0 then
+                for i = 1, #G.play.cards do
+                    if G.play.cards[i] == card then
+                        if #G.play.cards == 1 and i == 1 then
+                            card.ability.no_rank = true
+                            card.ability.no_suit = true
+                        else
+                            if i < #G.play.cards then
+                                local suit_prefix = G.play.cards[i+1].base.suit
+                                local rank_suffix = G.play.cards[i+1].base.value
+                                card.ability.no_rank = false
+                                card.ability.no_suit = false
+                                assert(SMODS.change_base(card, suit_prefix, rank_suffix))
+                            end
+                        end
+                    end
+                end
+            end
+            if G.hand and G.hand.cards and #G.hand.cards ~= 0 then
+                for i = 1, #G.hand.cards do
+                    if G.hand.cards[i] == card then
+                        if #G.hand.cards == 1 and i == 1 then
+                            card.ability.no_rank = true
+                            card.ability.no_suit = true
+                        else
+                            if i < #G.hand.cards then
+                                local suit_prefix = G.hand.cards[i+1].base.suit
+                                local rank_suffix = G.hand.cards[i+1].base.value
+                                card.ability.no_rank = false
+                                card.ability.no_suit = false
+                                assert(SMODS.change_base(card, suit_prefix, rank_suffix))
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        if G.hand ~= nil then
+            if #G.hand.highlighted ~= 0 then
+                for i = 1, #G.hand.highlighted do
+                    if G.hand.highlighted[i] == card then
+                        if #G.hand.highlighted == 1 and i == 1 then
+                            card.ability.no_rank = true
+                            card.ability.no_suit = true
+                        else
+                            if i < #G.hand.highlighted then
+                                local suit_prefix = G.hand.highlighted[i+1].base.suit
+                                local rank_suffix = G.hand.highlighted[i+1].base.value
+                                card.ability.no_rank = false
+                                card.ability.no_suit = false
+                                assert(SMODS.change_base(card, suit_prefix, rank_suffix))
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end,
+}
+
+SMODS.Enhancement{
+    key = "j_brainstorm",
+    loc_txt = {
+        name="Brainstorm",
+        text={
+            "Copies the ability",
+            "of leftmost {C:attention}Playing Card",
+        },
+    },
+    atlas = 'JokerEnhancements',
+    pos = {x = 7, y = 7},
+    no_collection = true,
+    replace_base_card = true,
+    always_scores = true,
+    no_rank = true,
+    weight = 0,
+    config = {extra = {blueprint = {}}},
+    in_pool = function(self)
+        return false
+    end,
+    calculate = function(self, card, context)
+        local other_card
+        if context.main_scoring then
+            for i = 1, #context.scoring_hand do
+                if context.scoring_hand[1] ~= card then
+                    other_card = context.scoring_hand[1]
+                end
+            end
+            if other_card then
+                card.ability.bonus = other_card:get_chip_bonus()
+                local eval, post = eval_card(other_card, context)
+                Card:set_edition()
+                if eval and eval.playing_card then
+                    for k, v in pairs(eval.playing_card) do
+                        card.ability.extra.blueprint[k] = v
+                        eval[k] = v
+                    end
+                end
+                if other_card.ability.extra.blueprint then
+                    for k, v in pairs(other_card.ability.extra.blueprint) do
+                        eval[k] = v
+                    end
+                end
+                return eval
+            end
+        end
+    end,
+    update = function(self, card, dt)
+        if G.play ~= nil then
+            if #G.play.cards ~= 0 then
+                if #G.play.cards[1] == card then
+                    card.ability.no_rank = true
+                    card.ability.no_suit = true
+                else
+                    local suit_prefix = G.play.cards[1].base.suit
+                    local rank_suffix = G.play.cards[1].base.value
+                    card.ability.no_rank = false
+                    card.ability.no_suit = false
+                    assert(SMODS.change_base(card, suit_prefix, rank_suffix))
+                end
+            end
+            if G.hand and G.hand.cards and #G.hand.cards ~= 0 then
+                if G.hand.cards[1] == card then
+                    card.ability.no_rank = true
+                    card.ability.no_suit = true
+                else
+                    local suit_prefix = G.hand.cards[i+1].base.suit
+                    local rank_suffix = G.hand.cards[i+1].base.value
+                    card.ability.no_rank = false
+                    card.ability.no_suit = false
+                    assert(SMODS.change_base(card, suit_prefix, rank_suffix))
+                end
+            end
+        end
+        if G.hand ~= nil then
+            if #G.hand.highlighted ~= 0 then
+                for i = 1, #G.hand.highlighted do
+                    if G.hand.highlighted[i] == card then
+                        if #G.hand.highlighted == 1 and i == 1 then
+                            card.ability.no_rank = true
+                            card.ability.no_suit = true
+                        else
+                            if i < #G.hand.highlighted then
+                                local suit_prefix = G.hand.highlighted[i+1].base.suit
+                                local rank_suffix = G.hand.highlighted[i+1].base.value
+                                card.ability.no_rank = false
+                                card.ability.no_suit = false
+                                assert(SMODS.change_base(card, suit_prefix, rank_suffix))
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end,
 }
 
 SMODS.Enhancement{
@@ -1233,9 +1493,9 @@ SMODS.PokerHand {
         { "S_2", true, enhancement = "m_soe_j_perkeo" },
     },
     evaluate = function(parts)
-    return parts.soe_jc_orig
+        return parts.soe_jc_orig
     end,
-  }
+}
   
 SMODS.PokerHandPart {
     key = 'jc_orig',
@@ -1284,6 +1544,48 @@ SMODS.Consumable {
 	end,
 }
 
+SMODS.PokerHand {
+    key = "nil",
+    name = "nil",
+    above_hand = "soe_joker_central",
+    visible = false,
+    chips = 50,
+    mult = 25,
+    l_chips = 12,
+    l_mult = 12,
+    example = {
+        { "C_T", false},
+        { "S_Q", false},
+        { "H_8", false},
+        { "S_J", false},
+        { "C_3", false},
+    },
+    evaluate = function(parts)
+        return parts.soe_nil_orig
+    end,
+}
+
+SMODS.PokerHandPart {
+    key = 'nil_orig',
+    func = function(hand)
+        if #SMODS.find_card('j_soe_reversesplash') > 0 then
+            local ret = {}
+            local cards = 0
+            for i = 1, #hand do
+                cards = cards + 1
+                table.insert(ret, hand[i])
+            end
+            if cards > 0 and #ret > 0 then
+                return { ret }
+            else
+                return {}
+            end
+        else
+            return {}
+        end
+    end
+}
+
 function string.starts(string, start)
     return string.sub(string, 1, string.len(start)) == start
 end
@@ -1312,7 +1614,7 @@ function Card:load(cardTable, other_card)
 end
 
 local oldcalcseal = Card.calculate_seal
-function Card:calculate_seal(context)
+function Card:calculate_seal(context, ischecking)
     if self.debuff then return nil end
     if self.ability and self.ability.set == 'Joker' then
         if self.seal == 'Red' and self.extraseals == nil and context.retrigger_joker_check and not context.retrigger_joker and context.other_card == self then
@@ -1411,7 +1713,7 @@ function Card:calculate_seal(context)
             if context.post_trigger and context.other_card == self then
                 self.oymatearyescored = true
             end
-            if context.after and not self.oymatearyescored then
+            if context.after and not self.oymatearyescored and not self.ability.eternal then
                 G.E_MANAGER:add_event(Event({
                     trigger = "after",
                     delay = 0.2,
@@ -1477,14 +1779,16 @@ function Card:calculate_seal(context)
                         return true
                     end,
                 }))
-                G.E_MANAGER:add_event(Event({
-                    trigger = "after",
-                    delay = 0.2,
-                    func = function()
-                        self:start_dissolve()
-                        return true
-                    end,
-                }))
+                if not self.ability.eternal then
+                    G.E_MANAGER:add_event(Event({
+                        trigger = "after",
+                        delay = 0.2,
+                        func = function()
+                            self:start_dissolve()
+                            return true
+                        end,
+                    }))
+                end
             end
             if self.seal == 'cry_green' then
                 if context.before then
@@ -1666,6 +1970,27 @@ function Card:calculate_seal(context)
             }
         end
     end
+    --[[
+    if not ischecking and self.extraseals then
+        local flags
+        if context.retrigger_joker_check and not context.retrigger_joker and context.other_card == self then
+            flags = {
+                repetitions = 1,
+                card = self,
+            }
+        end
+        local eval = flags
+        if eval then
+            for k, v in pairs(self.extraseals) do
+                for i = 1, self[v..'sealcount'] do
+                    eval.extra = flags
+                    eval = eval and type(eval) == 'table' and eval.extra or {}
+                end
+            end
+            return eval
+        end
+    end
+    ]]
     if not (self.ability.set == 'Default' or self.ability.set == 'Enhanced') then return nil end
     return oldcalcseal(self, context)
 end
@@ -1852,6 +2177,7 @@ end
 local smodsoldcalccontext = SMODS.calculate_context
 function SMODS.calculate_context(context, return_table)
     local g = smodsoldcalccontext(context, return_table)
+    --[[
     if context.individual and context.cardarea == G.play then
         print(context.other_card.legallysleeve)
         if context.other_card.legallysleeve == 'Plasma' then
@@ -1938,7 +2264,30 @@ function SMODS.calculate_context(context, return_table)
             end
         end
     end
+    ]]
+    --[[
+    if context.individual and context.cardarea == G.hand then
+        G.E_MANAGER:add_event(Event({
+            func = function()
+                SMODS.calculate_effect({mult = 2, card = context.other_card}, context.other_card)
+                return true
+            end
+        }))
+    end
+    ]]
     return g
+end
+
+local oldstartdissolve = Card.start_dissolve
+function Card:start_dissolve(dissolve_colours, silent, dissolve_time_fac, no_juice)
+    if self.ability.eternal then return nil end
+    return oldstartdissolve(self, dissolve_colours, silent, dissolve_time_fac, no_juice)
+end
+
+local oldshatter = Card.shatter
+function Card:shatter()
+    if self.ability.eternal then return nil end
+    return oldshatter(self)
 end
 
 local oldcalcjoker = Card.calculate_joker
@@ -2182,6 +2531,132 @@ function Card:calculate_joker(context)
     return g
 end
 
+local oldclick = Card.click
+function Card:click()
+    local g = oldclick(self)
+    if (self.config.center.key == 'v_soe_blueprint' or self.config.center.key == 'v_soe_brainstorm') and self.area ~= G.shop_vouchers and not table.contains(G.your_collection, self.area) and not (G.blueprintvoucherchoosecardarea and G.blueprintvoucherchoosecardarea.cards and G.blueprintvoucherchoosecardarea.cards[1]) then
+        G.SETTINGS.paused = true
+        G.ownerofblueprintvoucherchoosecardarea = self.config.center.key
+        G.blueprintvoucherchoosecardarea = CardArea(
+            G.ROOM.T.x + 0.2 * G.ROOM.T.w / 2,
+            G.ROOM.T.h,
+            5.3 * G.CARD_W,
+            1.03 * G.CARD_H,
+            { card_limit = 5, type = "title", highlight_limit = 0, collection = true }
+        )
+        local used_vouchers = {
+            n = G.UIT.R,
+            config = { align = "cm", padding = 0, no_fill = true },
+            nodes = {
+                { n = G.UIT.O, config = { object = G.blueprintvoucherchoosecardarea } },
+            },
+        }
+        for i = 1, #G.vouchers.cards do
+            if G.vouchers.cards[i].config.center.key ~= "v_soe_brainstorm" and G.vouchers.cards[i].config.center.key ~= "v_soe_blueprint" then
+                SMODS.add_card({set = 'Vouchers', area = G.blueprintvoucherchoosecardarea, key = G.vouchers.cards[i].config.center.key})
+            end
+        end
+        G.UIBOXGENERICOPTIONSBLUEPRINTVOUCHER = create_UIBox_generic_options({
+            back_func = "run_info",
+            snap_back = true,
+            contents = {
+                {
+                    n = G.UIT.R,
+                    config = {align = "cm", minw = 2.5, padding = 0.1, r = 0.1, colour = G.C.BLACK, emboss = 0.05},
+                    nodes = {used_vouchers},
+                },
+            },
+        })
+        G.FUNCS.overlay_menu({
+            definition = G.UIBOXGENERICOPTIONSBLUEPRINTVOUCHER,
+        })
+    end
+    if self.area == G.blueprintvoucherchoosecardarea and self.ability.set == "Voucher" and G.blueprintvoucherchoosecardarea and G.blueprintvoucherchoosecardarea.cards and G.blueprintvoucherchoosecardarea.cards[1] and self.config.center.key ~= G.ownerofblueprintvoucherchoosecardarea then
+        G.GAME["old"..G.ownerofblueprintvoucherchoosecardarea == "v_soe_brainstorm" and "brainstormvouchertocopy" or "blueprintvouchertocopy"] = G.GAME[G.ownerofblueprintvoucherchoosecardarea == "v_soe_brainstorm" and "brainstormvouchertocopy" or "blueprintvouchertocopy"]
+        G.GAME[G.ownerofblueprintvoucherchoosecardarea == "v_soe_brainstorm" and "brainstormvouchertocopy" or "blueprintvouchertocopy"] = self.config.center.key
+        G.FUNCS.run_info()
+        if G.GAME["old"..G.ownerofblueprintvoucherchoosecardarea == "v_soe_brainstorm" and "brainstormvouchertocopy" or "blueprintvouchertocopy"] or not G.vouchers.cards[G.GAME[G.ownerofblueprintvoucherchoosecardarea == "v_soe_brainstorm" and "brainstormvouchertocopy" or "blueprintvouchertocopy"]] then
+            local other_old_voucher = G.vouchers.cards[G.GAME["old"..G.ownerofblueprintvoucherchoosecardarea == "v_soe_brainstorm" and "brainstormvouchertocopy" or "blueprintvouchertocopy"]]
+            if other_old_voucher then
+                other_old_voucher:unapply_to_run(nil, true)
+            end
+        end
+        self:apply_to_run(nil, true)
+    end
+    return g
+end
+
+function SEALS.safe_get(t, ...)
+	local current = t
+	for _, k in ipairs({ ... }) do
+		if not current or current[k] == nil then
+			return false
+		end
+		current = current[k]
+	end
+	return current
+end
+
+SMODS.Voucher{
+    key = 'blueprint',
+    cost = 10,
+    atlas = 'BlueprintVouchers',
+    pos = { x = 0, y = 0 },
+    unlocked = true,
+    discovered = true,
+    loc_vars = function(self, info_queue, card)
+        return {vars = {SEALS.safe_get(G.localization.descriptions, "Voucher", G.GAME.blueprintvouchertocopy or "ddfjvgbjbfjvbnfbcmvd", "name") or "Nothing"}}
+    end,
+    calculate = function(self, card, context)
+        if G.GAME.blueprintvouchertocopy then
+            local other_voucher
+            for k, v in pairs(G.vouchers.cards) do
+                if v.config.center.key == G.GAME.blueprintvouchertocopy then
+                    other_voucher = v
+                    break
+                end
+            end
+            if other_voucher then
+                local center = other_voucher.config.center
+                if center.calculate and type(center.calculate) == 'function' then
+                    local o, t = center:calculate(other_voucher, context)
+                    if o or t then return o, t end
+                end
+            else
+                G.GAME.blueprintvouchertocopy = nil
+            end
+        end
+    end
+}
+
+SMODS.Voucher{
+    key = 'brainstorm',
+    cost = 10,
+    atlas = 'BlueprintVouchers',
+    pos = { x = 1, y = 0 },
+    unlocked = true,
+    discovered = true,
+    loc_vars = function(self, info_queue, card)
+        return {vars = {SEALS.safe_get(G.localization.descriptions, "Voucher", G.GAME.brainstormvouchertocopy or "ddfjvgbjbfjvbnfbcmvd", "name") or "Nothing"}}
+    end,
+    calculate = function(self, card, context)
+        local other_voucher
+        for k, v in pairs(G.vouchers.cards) do
+            if v.config.center.key == G.GAME.brainstormvouchertocopy then
+                other_voucher = v
+                break
+            end
+        end
+        if other_voucher then
+            local center = other_voucher.config.center
+            if center.calculate and type(center.calculate) == 'function' then
+                local o, t = center:calculate(other_voucher, context)
+                if o or t then return o, t end
+            end
+        end
+    end
+}
+
 SMODS.Joker{
     name = 'StoneCardJoker',
     key = 'stonecardjoker',
@@ -2209,6 +2684,625 @@ SMODS.Joker{
                 card = card
             }
         end
+    end,
+    in_pool = function(self)
+        return false
+    end
+}
+
+SMODS.Joker{
+    name = 'ReverseSplash',
+    key = 'reversesplash',
+    atlas = 'Placeholders',
+    pos = {x = 0, y = 0},
+    rarity = 1,
+    cost = 5,
+    unlocked = true,
+    discovered = true,
+    blueprint_compat = false,
+    eternal_compat = true,
+    perishable_compat = true,
+}
+
+local oldstartrun = Game.start_run
+function Game:start_run(args)
+    local g = oldstartrun(self, args)
+    if SMODS.find_mod("YGGDRASIL") and SkillTreePerks then
+        local jokerupgradessec = "soe_skill_tree_jokerupgrades"
+        if not check_if_section_exist(jokerupgradessec) then
+            SkillTreePerks[jokerupgradessec] = {
+                {
+                    {text = "JIM1", perk_id = "soe_jimbo_upgrade1", max_cap = 1, cost = 10},
+                    {text = "JIM2", perk_id = "soe_jimbo_upgrade2", max_cap = 1, cost = 30},
+                    {text = "JIM3", perk_id = "soe_jimbo_upgrade3", max_cap = 1, cost = 45},
+                    {text = "JIM4", perk_id = "soe_jimbo_upgrade4", max_cap = 1, cost = 60},
+                    {text = "JIM5", perk_id = "soe_jimbo_upgrade5", max_cap = 1, cost = 75},
+                },
+                {
+                    {text = "EGG1", perk_id = "soe_egg_upgrade1", max_cap = 1, cost = 30},
+                    {text = "EGG2", perk_id = "soe_egg_upgrade2", max_cap = 1, cost = 50},
+                    {text = "EGG3", perk_id = "soe_egg_upgrade3", max_cap = 1, cost = 60},
+                    {text = "EGG4", perk_id = "soe_egg_upgrade4", max_cap = 1, cost = 75},
+                    {text = "EGG5", perk_id = "soe_egg_upgrade5", max_cap = 1, cost = 90},
+                },
+            }
+            add_new_section(jokerupgradessec)
+        end
+    end
+    return g
+end
+
+SMODS.Joker:take_ownership('j_egg',
+    {
+        update = function(self,card,dt)
+            if SMODS.find_mod("YGGDRASIL") and if_skill_obtained then
+                local moneyincrease
+                if if_skill_obtained("soe_egg_upgrade4") then
+                    moneyincrease = 15
+                elseif if_skill_obtained("soe_egg_upgrade2") then
+                    moneyincrease = 8
+                elseif if_skill_obtained("soe_egg_upgrade1") then
+                    moneyincrease = 5
+                else
+                    moneyincrease = 3
+                end
+                card.ability.extra = moneyincrease
+            end
+        end,
+        calc_dollar_bonus = function (self, card)
+            if SMODS.find_mod("YGGDRASIL") and if_skill_obtained then
+                if if_skill_obtained("soe_egg_upgrade3") then
+                    if (pseudorandom('egg') < G.GAME.probabilities.normal / (if_skill_obtained("ygg_egg_upgrade5") and 2 or 4)) or (if_skill_obtained("soe_egg_upgrade5") and G.GAME.blind.boss) then
+                        return card.sell_cost
+                    end
+                end
+            end
+        end
+    },
+    true
+)
+
+SMODS.Joker{
+    name = 'AscendedJoker',
+    key = 'ascendedjoker',
+    atlas = 'JokerEnhancements',
+    pos = {x = 0, y = 0},
+    soul_pos = {x = 1000, y = 1000},
+    rarity = 4,
+    cost = 30,
+    unlocked = true,
+    discovered = true,
+    blueprint_compat = true,
+    eternal_compat = true,
+    perishable_compat = true,
+    config = {
+        frames = {
+            xlevels = 0,
+            ylevels = 0
+        },
+        extra = {
+            mult = 4,
+            suitmult = 3,
+            mpair = 8,
+            mtoak = 12,
+            mtwopair = 10,
+            mstraight = 12,
+            mflush = 10,
+            cpair = 50,
+            ctoak = 100,
+            ctwopair = 80,
+            cstraight = 100,
+            cflush = 80,
+            halfmult = 20,
+            xmult = 1,
+            normretriggers = 1,
+            chadretriggers = 2,
+            debt = 20,
+            chips = 0,
+            mystic = 15,
+            loyaltyremaining = 5,
+            freerolls = 1,
+            fibmult = 8,
+            scarychips = 30,
+            evenmult = 4,
+            oddchips = 31,
+            scholar = {chips = 20, mult = 4},
+            businessodds = 2,
+            businessmoney = 2,
+            ridethebusgain = 1,
+            spaceodds = 4,
+            eggsellgain = 3,
+            burglarhands = 3,
+            blackboardxmult = 3,
+            runnergain = 15,
+            runnerchips = 0,
+            icecreamchips = 100,
+            icecreamloss = 5,
+            bluechips = 2,
+            constellationgain = 0.1,
+            hikerchips = 5,
+            facelessmoney = 5,
+            greengainloss = 1,
+            todomoney = 4,
+            cavendish = 3,
+            cardsharp = 3,
+            redcardgain = 3,
+            madnessgain = 0.5,
+            squaregain = 4,
+            vampiregain = 0.1,
+            hologramgain = 0.25,
+            vagabondmoney = 4,
+            baronxmult = 1.5,
+            cloudninemoney = 1,
+            money = 0,
+            rocketgain = 1,
+            obeliskgain = 0.2,
+            photoxmult = 2,
+            giftmoney = 1,
+            turtlebean = {handsize = 5, loss = 1},
+            erosiongain = 4,
+            reservedparkingmoney = 1,
+            maininrebatemoney = 5,
+            tothemoongain = 1, 	
+            hallucinationodds = 2,
+            fortunegain = 1,
+            juggler = 1,
+            drunkard = 1,
+            stonejokergain = 25,
+            luckycatgain = 0.25,
+            baseballxmult = 1.5,
+            bullchips = 2,
+            tradingcardmoney = 3,
+            flashcardgain = 2,
+            popcornloss = 4,
+            pantsgain = 2,
+            ancientxmult = 1.5,
+            ramen = {xmult = 2, loss = 0.01},
+            walkie = {chips = 10, mult = 4},
+            seltzerhandsleft = 10,
+            castlegain = 3,
+            smileymult = 5,
+            campfiregain = 0.25,
+            goldenticketmoney = 4,
+            mrbonesrequire = 0.25,
+            acrobatxmult = 3,
+            troubadour = {handsize = 2, hands = 1},
+            throwbackgain = 0.25,
+            roughgemmoney = 1,
+            bloodstone = {odds = 2, xmult = 1.5},
+            arrowheadchips = 50,
+            onyxagatemult = 7,
+            glassgain = 0.75,
+            flowerxmult = 3,
+            weegain = 8,
+            merryandy = {discards = 3, handsize = 1},
+            idolxmult = 2,
+            seeingdoublexmult = 2,
+            matadormoney = 8,
+            hittheroadgain = 0.5,
+            duoxmult = 2,
+            trioxmult = 3,
+            familyxmult = 4,
+            orderxmult = 3,
+            tribexmult = 2,
+            stuntman = {chips = 250, handsize = 2},
+            invisiblerounds = 2,
+            satelitegain = 1,
+            shootthemoonmult = 13,
+            driverslicensexmult = 3,
+            bootstraps = {mult = 2, dollars = 5},
+            cainogain = 1,
+            tribouletxmult = 2,
+            yorickgain = 1,
+        }
+    },
+    add_to_deck = function (self, card, from_debuff)
+        G.GAME.round_resets.discards = G.GAME.round_resets.discards + card.ability.extra.drunkard + card.ability.extra.merryandy.discards
+        ease_discard(card.ability.extra.drunkard + card.ability.extra.merryandy.discards)
+        G.GAME.bankrupt_at = G.GAME.bankrupt_at - card.ability.extra.debt
+        for k, v in pairs(G.GAME.probabilities) do 
+            G.GAME.probabilities[k] = v*2
+        end
+        SMODS.change_free_rerolls(1)
+        calculate_reroll_cost(true)
+        G.hand:change_size(card.ability.extra.turtlebean.handsize)
+        G.GAME.interest_amount = G.GAME.interest_amount + 1
+        G.E_MANAGER:add_event(Event({func = function()
+            for k, v in pairs(G.I.CARD) do
+                if v.set_cost then v:set_cost() end
+            end
+            return true
+        end }))
+        G.hand:change_size(card.ability.extra.troubadour.handsize)
+        G.GAME.round_resets.hands = G.GAME.round_resets.hands + card.ability.extra.troubadour.hands
+        G.hand:change_size(-card.ability.extra.stuntman.handsize)
+    end,
+    remove_from_deck = function (self, card, from_debuff)
+        G.GAME.round_resets.discards = G.GAME.round_resets.discards - card.ability.extra.drunkard - card.ability.extra.merryandy.discards
+        ease_discard(card.ability.extra.drunkard + card.ability.extra.merryandy.discards)
+        G.GAME.bankrupt_at = G.GAME.bankrupt_at + card.ability.extra.debt
+        for k, v in pairs(G.GAME.probabilities) do 
+            G.GAME.probabilities[k] = v/2
+        end
+        SMODS.change_free_rerolls(-1)
+        calculate_reroll_cost(true)
+        G.hand:change_size(-card.ability.extra.turtlebean.handsize)
+        G.GAME.interest_amount = G.GAME.interest_amount - 1
+        G.E_MANAGER:add_event(Event({func = function()
+            for k, v in pairs(G.I.CARD) do
+                if v.set_cost then v:set_cost() end
+            end
+            return true
+        end }))
+        G.hand:change_size(-card.ability.extra.troubadour.handsize)
+        G.GAME.round_resets.hands = G.GAME.round_resets.hands + card.ability.extra.troubadour.hands
+        G.hand:change_size(card.ability.extra.stuntman.handsize)
+    end,
+    calculate = function(self, card, context)
+        if context.setting_blind and not (context.blueprint_card or self).getting_sliced then
+            --[[
+            local my_pos
+            for i = 1, #G.jokers.cards do
+                if G.jokers.cards[i] == card then my_pos = i; break end
+            end
+            if my_pos and G.jokers.cards[my_pos+1] and not G.jokers.cards[my_pos+1].ability.eternal and not G.jokers.cards[my_pos+1].getting_sliced and not context.blueprint then 
+                local sliced_card = G.jokers.cards[my_pos+1]
+                sliced_card.getting_sliced = true
+                G.GAME.joker_buffer = G.GAME.joker_buffer - 1
+                G.E_MANAGER:add_event(Event({func = function()
+                    card.children.center:set_sprite_pos({x = 5, y = 5})
+                    G.GAME.joker_buffer = 0
+                    card.ability.extra.mult = card.ability.extra.mult + sliced_card.sell_cost*2
+                    card:juice_up(0.8, 0.8)
+                    sliced_card:start_dissolve({HEX("57ecab")}, nil, 1.6)
+                    play_sound('slice1', 0.96+math.random()*0.08)
+                return true end }))
+                card_eval_status_text(card, 'extra', card, nil, nil, {message = localize{type = 'variable', key = 'a_mult', vars = {card.ability.extra.mult+2*sliced_card.sell_cost}}, colour = G.C.RED, no_juice = true})
+            end
+            ]]
+            --[[
+            local front = pseudorandom_element(G.P_CARDS, pseudoseed('marb_fr'))
+            G.playing_card = (G.playing_card and G.playing_card + 1) or 1
+            local card = Card(G.discard.T.x + G.discard.T.w/2, G.discard.T.y, G.CARD_W, G.CARD_H, front, G.P_CENTERS.m_stone, {playing_card = G.playing_card})
+            G.E_MANAGER:add_event(Event({
+                func = function()
+                    card.children.center:set_sprite_pos({x = 3, y = 2})
+                    card:start_materialize({G.C.SECONDARY_SET.Enhanced})
+                    G.play:emplace(card)
+                    table.insert(G.playing_cards, card)
+                    return true
+                end}))
+            card_eval_status_text(context.blueprint_card or card, 'extra', nil, nil, nil, {message = localize('k_plus_stone'), colour = G.C.SECONDARY_SET.Enhanced})
+            ]]
+        end
+        if context.joker_main and context.cardarea == G.jokers then
+            SMODS.calculate_effect({mult = card.ability.extra.mult, card = card}, card)
+            if next(context.poker_hands["Pair"]) then
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        card.children.center:set_sprite_pos({x = 2, y = 0})
+                        return true
+                    end
+                }))
+                SMODS.calculate_effect({mult = card.ability.extra.mpair, card = card}, card)
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        card.children.center:set_sprite_pos({x = 0, y = 14})
+                        return true
+                    end
+                }))
+                SMODS.calculate_effect({chips = card.ability.extra.cpair, card = card}, card)
+            end
+            if next(context.poker_hands["Three of a Kind"]) then
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        card.children.center:set_sprite_pos({x = 3, y = 0})
+                        return true
+                    end
+                }))
+                SMODS.calculate_effect({mult = card.ability.extra.mtoak, card = card}, card)
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        card.children.center:set_sprite_pos({x = 1, y = 14})
+                        return true
+                    end
+                }))
+                SMODS.calculate_effect({chips = card.ability.extra.ctoak, card = card}, card)
+            end
+            if next(context.poker_hands["Two Pair"]) then
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        card.children.center:set_sprite_pos({x = 4, y = 0})
+                        return true
+                    end
+                }))
+                SMODS.calculate_effect({mult = card.ability.extra.mtwopair, card = card}, card)
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        card.children.center:set_sprite_pos({x = 2, y = 14})
+                        return true
+                    end
+                }))
+                SMODS.calculate_effect({chips = card.ability.extra.ctwopair, card = card}, card)
+            end
+            if next(context.poker_hands["Straight"]) then
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        card.children.center:set_sprite_pos({x = 5, y = 0})
+                        return true
+                    end
+                }))
+                SMODS.calculate_effect({mult = card.ability.extra.mstraight, card = card}, card)
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        card.children.center:set_sprite_pos({x = 3, y = 14})
+                        return true
+                    end
+                }))
+                SMODS.calculate_effect({chips = card.ability.extra.cstraight, card = card}, card)
+            end
+            if next(context.poker_hands["Flush"]) then
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        card.children.center:set_sprite_pos({x = 6, y = 0})
+                        return true
+                    end
+                }))
+                SMODS.calculate_effect({mult = card.ability.extra.mflush, card = card}, card)
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        card.children.center:set_sprite_pos({x = 4, y = 14})
+                        return true
+                    end
+                }))
+                SMODS.calculate_effect({chips = card.ability.extra.cflush, card = card}, card)
+            end
+            if #context.full_hand < 3 then
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        card.children.center:set_sprite_pos({x = 7, y = 0})
+                        return true
+                    end
+                }))
+                SMODS.calculate_effect({mult = card.ability.extra.halfmult, card = card}, card)
+            end
+            if G.GAME.current_round.discards_left == 0 then
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        card.children.center:set_sprite_pos({x = 2, y = 2})
+                        return true
+                    end
+                }))
+                SMODS.calculate_effect({mult = card.ability.extra.mystic, card = card}, card)
+            end
+        end
+        if context.individual then
+            if context.cardarea == G.play then
+                if context.other_card:is_suit("Hearts") then
+                    G.E_MANAGER:add_event(Event({
+                        func = function()
+                            card.children.center:set_sprite_pos({x = 7, y = 1})
+                            return true
+                        end
+                    }))
+                    SMODS.calculate_effect({mult = card.ability.extra.suitmult, card = context.other_card}, card)
+                end
+                if context.other_card:is_suit("Diamonds") then
+                    G.E_MANAGER:add_event(Event({
+                        func = function()
+                            card.children.center:set_sprite_pos({x = 6, y = 1})
+                            return true
+                        end
+                    }))
+                    SMODS.calculate_effect({mult = card.ability.extra.suitmult, card = context.other_card}, card)
+                end
+                if context.other_card:is_suit("Spades") then
+                    G.E_MANAGER:add_event(Event({
+                        func = function()
+                            card.children.center:set_sprite_pos({x = 8, y = 1})
+                            return true
+                        end
+                    }))
+                    SMODS.calculate_effect({mult = card.ability.extra.suitmult, card = context.other_card}, card)
+                end
+                if context.other_card:is_suit("Clubs") then
+                    G.E_MANAGER:add_event(Event({
+                        func = function()
+                            card.children.center:set_sprite_pos({x = 9, y = 1})
+                            return true
+                        end
+                    }))
+                    SMODS.calculate_effect({mult = card.ability.extra.suitmult, card = context.other_card}, card)
+                end
+                if context.other_card:is_suit("Diamonds") then
+                    G.E_MANAGER:add_event(Event({
+                        func = function()
+                            card.children.center:set_sprite_pos({x = 9, y = 7})
+                            return true
+                        end
+                    }))
+                    SMODS.calculate_effect({dollars = card.ability.extra.roughgemmoney, card = context.other_card}, card)
+                end
+                if context.other_card:is_suit("Spades") then
+                    G.E_MANAGER:add_event(Event({
+                        func = function()
+                            card.children.center:set_sprite_pos({x = 1, y = 8})
+                            return true
+                        end
+                    }))
+                    SMODS.calculate_effect({chips = card.ability.extra.arrowheadchips, card = context.other_card}, card)
+                end
+                if context.other_card:is_suit("Clubs") then
+                    G.E_MANAGER:add_event(Event({
+                        func = function()
+                            card.children.center:set_sprite_pos({x = 2, y = 8})
+                            return true
+                        end
+                    }))
+                    SMODS.calculate_effect({mult = card.ability.extra.onyxagatemult, card = context.other_card}, card)
+                end
+                if context.other_card:is_suit("Hearts") and pseudorandom('bloodstone') < G.GAME.probabilities.normal/card.ability.extra.bloodstone.odds then
+                    G.E_MANAGER:add_event(Event({
+                        func = function()
+                            card.children.center:set_sprite_pos({x = 0, y = 8})
+                            return true
+                        end
+                    }))
+                    SMODS.calculate_effect({x_mult = card.ability.extra.bloodstone.xmult, card = context.other_card}, card)
+                end
+                if context.other_card:get_id() == 12 or context.other_card:get_id() == 13 then
+                    G.E_MANAGER:add_event(Event({
+                        func = function()
+                            card.children.center:set_sprite_pos({x = 4, y = 8})
+                            return true
+                        end
+                    }))
+                    SMODS.calculate_effect({x_mult = card.ability.extra.tribouletxmult, card = context.other_card}, card)
+                end
+            end
+            if context.cardarea == G.hand then
+                if not context.end_of_round then
+                    if context.other_card:get_id() == 12 then
+                        G.E_MANAGER:add_event(Event({
+                            func = function()
+                                card.children.center:set_sprite_pos({x = 2, y = 6})
+                                return true
+                            end
+                        }))
+                        if context.other_card.debuff then
+                            return {
+                                message = localize('k_debuffed'),
+                                colour = G.C.RED,
+                                card = card,
+                            }
+                        else
+                            return {
+                                mult = card.ability.extra.shootthemoonmult,
+                                card = card
+                            }
+                        end
+                    end
+                    if context.other_card:get_id() == 13 then
+                        G.E_MANAGER:add_event(Event({
+                            func = function()
+                                card.children.center:set_sprite_pos({x = 6, y = 12})
+                                return true
+                            end
+                        }))
+                        if context.other_card.debuff then
+                            return {
+                                message = localize('k_debuffed'),
+                                colour = G.C.RED,
+                                card = card,
+                            }
+                        else
+                            return {
+                                x_mult = card.ability.extra.baronxmult,
+                                card = card
+                            }
+                        end
+                    end
+                end
+            end
+        end
+        if context.repetition then
+            if context.cardarea == G.hand then
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        card.children.center:set_sprite_pos({x = 4, y = 1})
+                        return true
+                    end
+                })) 
+                return {
+                    message = localize('k_again_ex'),
+                    repetitions = card.ability.extra.normretriggers,
+                    card = card,
+                }
+            end
+            if context.cardarea == G.play then
+                local retriggeramount = 0
+                if card.ability.extra.seltzerhandsleft > 0 then
+                    retriggeramount = retriggeramount + card.ability.extra.normretriggers
+                end
+                if context.other_card:is_face() then
+                    retriggeramount = retriggeramount + card.ability.extra.normretriggers
+                end
+                if context.other_card:get_id() == 2 or context.other_card:get_id() == 3 or context.other_card:get_id() == 4 or context.other_card:get_id() == 5 then
+                    retriggeramount = retriggeramount + card.ability.extra.normretriggers
+                end
+                if G.GAME.current_round.hands_left == 0 then
+                    retriggeramount = retriggeramount + card.ability.extra.normretriggers
+                end
+                if context.other_card == context.scoring_hand[1] then
+                    retriggeramount = retriggeramount + card.ability.extra.chadretriggers
+                end
+                return {
+                    message = localize('k_again_ex'),
+                    repetitions = retriggeramount,
+                    card = card,
+                }
+            end
+        end
+        if context.after then
+            if card.ability.extra.seltzerhandsleft - 1 == 0 then
+                card.ability.extra.seltzerhandsleft = 0
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        card.children.center:set_sprite_pos({x = 3, y = 15})
+                        play_sound('tarot1')
+                        card:juice_up(0.3, 0.4)
+                        return true
+                    end
+                })) 
+                SMODS.calculate_effect({message = localize('k_drank_ex'), colour = G.C.FILTER}, card)
+            else
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        card.children.center:set_sprite_pos({x = 3, y = 15})
+                        return true
+                    end
+                }))
+                card.ability.extra.seltzerhandsleft = card.ability.extra.seltzerhandsleft - 1
+                SMODS.calculate_effect({message = card.ability.extra.seltzerhandsleft..'', colour = G.C.FILTER}, card)
+            end
+        end
+    end,
+    update = function(self, card, dt)
+        if card.children.center.sprite_pos and card.children.center.sprite_pos.x >= 3 and card.children.center.sprite_pos.x <= 7 and card.children.center.sprite_pos.y == 8 then
+            card.children.floating_sprite:set_sprite_pos({x = card.children.center.sprite_pos.x, y = card.children.center.sprite_pos.y + 1})
+        elseif card.children.center.sprite_pos and card.children.center.sprite_pos.x == 4  and card.children.center.sprite_pos.y == 12 then
+            card.children.floating_sprite:set_sprite_pos({x = 2, y = 9})
+        else
+            card.children.floating_sprite:set_sprite_pos({x = 1000, y = 1000})
+        end
+        --[[
+        anim = {}
+        if not anim.t then anim.t = 0 end
+        anim.t = anim.t + dt
+        if anim.t > 1/(anim.fps or 10) then
+            anim.t = anim.t - 1/(anim.fps or 10)
+            next_frame = true
+        end
+        ]]
+        --[[
+        if true then
+            card.ability.frames.xlevels = card.ability.frames.xlevels + 0.1
+            if card.ability.frames.ylevels >= 9 and card.ability.frames.ylevels < 10 then
+                card.ability.frames.ylevels = 10
+            end
+            if card.ability.frames.xlevels >= 9 then
+                card.ability.frames.ylevels = card.ability.frames.ylevels + 0.1
+            end
+            if card.ability.frames.xlevels >= 10 then
+                card.ability.frames.xlevels = 0
+            end
+            if card.ability.frames.ylevels >= 15 then
+                card.ability.frames.xlevels = 0
+                card.ability.frames.ylevels = 0
+            end
+            card.children.center:set_sprite_pos({x = math.floor(card.ability.frames.xlevels), y = math.floor(card.ability.frames.ylevels)})
+        end
+        ]]
     end,
     in_pool = function(self)
         return false
@@ -2343,11 +3437,19 @@ if Bakery_API and Bakery_API.Charm then
 end
 ]]
 
+
+for k, v in pairs(G.P_CENTER_POOLS.Consumeables) do
+    SEALS.all_consumables = SEALS.all_consumables or {}
+    table.insert(SEALS.all_consumables, v.key)
+    SEALS.all_consumable_jokers = SEALS.all_consumable_jokers or {}
+    table.insert(SEALS.all_consumable_jokers, "j_soe_"..v.key.."joker")
+end
+
 for k, v in pairs(G.P_CENTERS) do
     local name = v.name
     if v.set == 'Planet' and v.config.hand_type then
         SMODS.Joker{
-            key = string.lower(name) .. 'joker',
+            key = v.key .. 'joker',
             atlas = v.atlas or 'Tarots',
             pos = v.pos,
             rarity = 3,
@@ -2383,7 +3485,7 @@ end
 
 SMODS.Joker{
     name = 'TalismanJoker',
-    key = 'talismanjoker',
+    key = 'c_talismanjoker',
     atlas = 'Tarots',
     pos = {x = 3, y = 4},
     rarity = 3,
@@ -2467,7 +3569,7 @@ SMODS.DrawStep{
 
 SMODS.Joker{
     name = 'BlankJoker',
-    key = 'blankjoker',
+    key = 'v_blankjoker',
     atlas = 'Vouchers',
     pos = {x = 7, y = 0},
     rarity = 3,
@@ -2503,7 +3605,7 @@ SMODS.Joker{
 
 SMODS.Joker{
     name = 'AntimatterJoker',
-    key = 'antimatterjoker',
+    key = 'v_antimatterjoker',
     atlas = 'Vouchers',
     pos = {x = 7, y = 1},
     rarity = 4,
@@ -2511,6 +3613,7 @@ SMODS.Joker{
     negativeshader = true,
     unlocked = true,
     discovered = true,
+    no_doe = true,
     blueprint_compat = true,
     eternal_compat = true,
     perishable_compat = true,
@@ -2663,6 +3766,7 @@ SMODS.Joker{
     end
 }
 
+--[[
 SMODS.Joker:take_ownership('j_triboulet',
     {
         calculate = function(self, card, context)
@@ -2684,6 +3788,7 @@ SMODS.Joker:take_ownership('j_triboulet',
     },
     true
 )
+]]
 
 SMODS.Joker{
     name = 'ExtraLife',
@@ -2695,7 +3800,7 @@ SMODS.Joker{
     unlocked = true,
     discovered = true,
     blueprint_compat = true,
-    eternal_compat = true,
+    eternal_compat = false,
     perishable_compat = true,
     no_collection = true,
     config = {
@@ -2768,6 +3873,36 @@ SMODS.Joker{
     perishable_compat = false,
 }
 
+if cryptidyeohna then
+    SMODS.Joker{
+        name = 'ThinkingEmoji',
+        key = 'thinkingemoji',
+        atlas = 'Think',
+        pos = {x = 0, y = 0},
+        soul_pos = {x = 1, y = 0},
+        config = {extra = {emult_mod = 0.2, idea_count = 18}},
+        rarity = "cry_exotic",
+        cost = 62,
+        unlocked = true,
+        discovered = true,
+        blueprint_compat = true,
+        eternal_compat = true,
+        perishable_compat = false,
+        loc_vars = function(self,info_queue,card)
+            return {vars = {card.ability.extra.emult_mod, card.ability.extra.emult or (1 + (card.ability.extra.emult_mod * card.ability.extra.idea_count))}}
+        end,
+        calculate = function(self, card, context)
+            if context.joker_main and context.cardarea == G.jokers then
+                card.ability.extra.emult = 1 + (card.ability.extra.emult_mod * card.ability.extra.idea_count)
+                return {
+                    emult = card.ability.extra.emult,
+                    colour = G.C.DARK_EDITION
+                }
+            end
+        end
+    }
+end
+
 local sealoverlords = SMODS.Gradient{
         key = 'seal_gradient',
         colours = {
@@ -2820,7 +3955,7 @@ else
     infinityrarity = 'soe_infinity'
 end
 
-if Cryptid.random_consumable then
+if cryptidyeohna then
     SEALS.randomconsumeable = Cryptid.random_consumable
 else
     function SEALS.randomconsumeable(seed, excluded_flags, banned_card, pool, no_undiscovered)
@@ -3378,8 +4513,26 @@ end
 
 local oldupdate = Card.update
 function Card:update(dt)
+    if G.GAME and G.GAME.hands and G.GAME.hands["soe_nil"] and G.GAME.hands["soe_nil"].played and G.GAME.hands["soe_nil"].played > 0 then
+        G.GAME.hands["soe_nil"].visible = false
+        G.GAME.hands["soe_nil"].played = 0
+    end
     if not SEALS.config.nonjokerdisplay and self.joker_display_values and self.ability and self.ability.set ~= 'Joker' then
         self.joker_display_values.disabled = true
+    end
+    for i, v in ipairs(SEALS.all_consumables) do
+        if self.config.center.key == v then
+            if self.area == G.jokers then
+                self:set_ability(G.P_CENTERS[SEALS.all_consumable_jokers[i]])
+            end
+        end
+    end
+    for i, v in ipairs(SEALS.all_consumable_jokers) do
+        if self.config.center.key == v then
+            if self.area == G.consumeables then
+                self:set_ability(G.P_CENTERS[SEALS.all_consumables[i]])
+            end
+        end
     end
     if (G.GAME.selected_back and G.GAME.selected_back.effect and G.GAME.selected_back.effect.center and G.GAME.selected_back.effect.center.key == 'b_soe_seal') or (G.GAME.selected_sleeve and G.GAME.selected_sleeve == 'sleeve_soe_seal') then
         local seals = {}
@@ -3551,7 +4704,6 @@ function table.contains(table, element)
         return false
     end
 end
-  
 
 SMODS.DrawStep{
     key = 'foursealstoshow',
