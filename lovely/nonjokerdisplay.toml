@@ -118,7 +118,7 @@ JokerDisplay.Enhancement_Definitions = {
             return not card.debuff and card.config.center.key == 'm_mult' and SEALS and SEALS.config.nonjokerdisplay
         end,
         mod_function = function(card)
-            return {mult = 4}
+            return {mult = card.ability.mult}
         end
     },
     m_bonus = { -- Bonus
@@ -126,7 +126,7 @@ JokerDisplay.Enhancement_Definitions = {
             return not card.debuff and card.config.center.key == 'm_bonus' and SEALS and SEALS.config.nonjokerdisplay
         end,
         mod_function = function(card)
-            return {chips = 30}
+            return {chips = card.ability.bonus}
         end
     },
     m_glass = { -- Glass
@@ -141,7 +141,7 @@ JokerDisplay.Enhancement_Definitions = {
             return not card.debuff and card.config.center.key == 'm_glass' and SEALS and SEALS.config.nonjokerdisplay
         end,
         mod_function = function(card)
-            return {x_mult = 2}
+            return {x_mult = card.ability.x_mult}
         end
     },
 }

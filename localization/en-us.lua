@@ -91,14 +91,14 @@ return {
                     "{C:inactive}(#1#){}"
                 }
             },
-            j_soe_blankjoker = {
+            j_soe_v_blankjoker = {
                 name = 'Blank Joker',
                 text={
                     "In {C:attention}#1#{} rounds, turn into",
                     "{C:dark_edition}Antimatter Joker{}",
                 }
             },
-            j_soe_antimatterjoker = {
+            j_soe_v_antimatterjoker = {
                 name = 'Antimatter Joker',
                 text={
                     "{C:attention}ALL{} {C:dark_edition}Negative{} cards",
@@ -106,12 +106,32 @@ return {
                     "and {C:dark_edition}Negative{} is {X:dark_edition,C:white}#2#X{} as often to appear"
                 }
             },
-            j_soe_talismanjoker = {
+            j_soe_c_talismanjoker = {
                 name = 'Talisman Joker',
                 text={
                     "Gives a random scoring card",
                     "A {C:attention}Gold Seal{}",
                     "{C:inactive}(if possible){}",
+                }
+            },
+            j_soe_thinkingemoji = {
+                name = 'Thinking Emoji',
+                text={
+                    "Gains {X:dark_edition,C:white}^#1#{} Mult",
+                    "for every idea that I get",
+                    "{C:inactive}(Currently {}{X:dark_edition,C:white}^#2#{} {C:inactive}Mult){}",
+                }
+            },
+            j_soe_reversesplash = {
+                name = 'Drought',
+                text={
+                    "{C:attention}Played{} cards do {C:attention}not{} score",
+                }
+            },
+            j_soe_ascendedjoker = {
+                name = 'Every Joker',
+                text={
+                    "All at the same time",
                 }
             },
         },
@@ -351,7 +371,24 @@ return {
                 }
             },
         },
-        Voucher={},
+        Voucher={
+            v_soe_blueprint = {
+                name = "Blueprint",
+                text = {
+                    "Copies ability of",
+                    "another {C:attention}Voucher{}",
+                    "{C:inactive}(Currently copying: #1#){}",
+                }
+            },
+            v_soe_brainstorm = {
+                name = "Brainstorm",
+                text = {
+                    "Copies the ability",
+                    "of another {C:attention}Voucher{}",
+                    "{C:inactive}(Currently copying: #1#){}",
+                }
+            }
+        },
         Sleeve = {
             sleeve_soe_seal = {
                 name = "Seal Sleeve",
@@ -390,6 +427,75 @@ return {
                 }
 			},
 		},
+        SkillPerks = {
+            sp_soe_egg_upgrade1 = {
+                name = "Egg",
+                text = {
+                    "Egg upgrades by {C:money}$5{}",
+                    "{C:inactive}(#1#/1)",
+                }
+            },
+            sp_soe_egg_upgrade1_name = {
+                name = "Egg",
+                text = {
+                    "Egg",
+                }
+            },
+            sp_soe_egg_upgrade2 = {
+                name = "Egg",
+                text = {
+                    "Egg upgrades by {C:money}$8{}",
+                    "{C:inactive}(#1#/1)",
+                }
+            },
+            sp_soe_egg_upgrade2_name = {
+                name = "Egg",
+                text = {
+                    "Egg",
+                }
+            },
+            sp_soe_egg_upgrade3 = {
+                name = "Egg",
+                text = {
+                    "{C:green}1 in 4{} chance to give sell value",
+                    "at end of round",
+                    "{C:inactive}(#1#/1)",
+                }
+            },
+            sp_soe_egg_upgrade3_name = {
+                name = "Egg",
+                text = {
+                    "Egg",
+                }
+            },
+            sp_soe_egg_upgrade4 = {
+                name = "Egg",
+                text = {
+                    "Egg upgrades by {C:money}$15{}",
+                    "{C:inactive}(#1#/1)",
+                }
+            },
+            sp_soe_egg_upgrade4_name = {
+                name = "Egg",
+                text = {
+                    "Egg",
+                }
+            },
+            sp_soe_egg_upgrade5 = {
+                name = "Egg",
+                text = {
+                    "Egg upgrade 3's chance is improved to {C:green}1 in 2{}",
+                    "Guaranteed if blind is a boss blind",
+                    "{C:inactive}(#1#/1)",
+                }
+            },
+            sp_soe_egg_upgrade5_name = {
+                name = "Egg",
+                text = {
+                    "Egg",
+                }
+            },
+        },
     },
     misc = {
         achievement_descriptions={
@@ -405,6 +511,8 @@ return {
             k_soe_infinity = "Infinity",
 
             soe_hand_joker_central = "Joker Central",
+            
+            soe_skill_tree_jokerupgrades = "Joker Upgrades",
         },
         high_scores={},
         labels={
@@ -418,10 +526,12 @@ return {
             k_soe_infinity = "Infinity",
         },
         poker_hand_descriptions = {
-            soe_joker_central = {"5 Jokers"}
+            soe_joker_central = {"5 Jokers"},
+            soe_nil = {"nil"},
         },
         poker_hands = {
             soe_joker_central = "Joker Central",
+            soe_nil = "nil",
         },
 
         quips={

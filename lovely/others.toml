@@ -56,3 +56,95 @@ pattern = 'for _, v in ipairs(info_queue) do'
 position = "before"
 payload = 'if _c.legallyplasmasleeve then info_queue[#info_queue+1] = {key = "legallyplasmasleeve", set = "Other"} end'
 match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "card.lua"
+pattern = "function Card:apply_to_run(center)"
+position = "at"
+payload = "function Card:apply_to_run(center, isblueprint)"
+overwrite = true
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "card.lua"
+pattern = '''
+local card_to_save = self and copy_card(self) or Card(0, 0, G.CARD_W, G.CARD_H, G.P_CARDS.empty, center)
+card_to_save.VT.x, card_to_save.VT.y = G.vouchers.T.x, G.vouchers.T.y
+card_to_save.ability.extra = self and self.ability.extra or card_to_save.ability.extra
+G.vouchers:emplace(card_to_save)
+'''
+position = "at"
+payload = '''
+if not isblueprint then
+    local card_to_save = self and copy_card(self) or Card(0, 0, G.CARD_W, G.CARD_H, G.P_CARDS.empty, center)
+    card_to_save.VT.x, card_to_save.VT.y = G.vouchers.T.x, G.vouchers.T.y
+    card_to_save.ability.extra = self and self.ability.extra or card_to_save.ability.extra
+    G.vouchers:emplace(card_to_save)
+else
+    local card_to_save = self
+end
+'''
+overwrite = true
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = '''=[SMODS _ "src/utils.lua"]'''
+pattern = '''-- TARGET: card destroyed'''
+position = "after"
+payload = '''
+if card.ability.eternal then destroyed = nil end
+'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = '''functions/state_events.lua'''
+pattern = '''if removed then'''
+position = "at"
+payload = '''
+if removed and not (G.hand.highlighted[i] and G.hand.highlighted[i].ability and G.hand.highlighted[i].ability.eternal) then
+'''
+overwrite = true
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = '''functions/state_events.lua'''
+pattern = '''local unsplashed = SMODS.never_scores(G.play.cards[i])'''
+position = "at"
+payload = '''
+local unsplashed = SMODS.never_scores(G.play.cards[i]) or #SMODS.find_card("j_soe_reversesplash") > 0
+'''
+overwrite = true
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = '''=[SMODS _ "src/utils.lua"]'''
+pattern = '''
+context.main_scoring = nil
+context.individual = true
+context.other_card = card
+'''
+position = "after"
+payload = '''
+SMODS.calculate_context({individual = true, other_card = card})
+'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = '''=[SMODS _ "src/utils.lua"]'''
+pattern = '''
+context.playing_card_end_of_round = nil
+context.individual = true
+context.other_card = card
+'''
+position = "after"
+payload = '''
+SMODS.calculate_context({individual = true, other_card = card})
+'''
+match_indent = true
