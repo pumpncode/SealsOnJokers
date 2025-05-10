@@ -2729,6 +2729,7 @@ function Game:start_run(args)
             add_new_section(jokerupgradessec)
         end
     end
+    G.jokers.config.highlighted_limit = 1000
     return g
 end
 
