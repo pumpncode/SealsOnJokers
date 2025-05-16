@@ -13,7 +13,8 @@ return {
             bl_soe_theseal = {
                 name = 'The Seal',
                 text = {
-                    'Cards without seals are debuffed',
+                    'All cards are face down',
+                    'Seals show on the back of cards during this round',
                 }
             },
         },
@@ -134,6 +135,14 @@ return {
                     "All at the same time",
                 }
             },
+            j_joker_u = {
+                name="Joker",
+                text={
+                    "{C:chips,s:1.1}+#2#{} Chips",
+                    "{C:red,s:1.1}+#1#{} Mult",
+                    "{X:red,s:1.1,C:white}X#3#{} Mult"
+                },
+            },
         },
         Other={
             soe_sealseal_seal = {
@@ -180,6 +189,13 @@ return {
                 text = {
                     'If this card is played and not scored,',
                     'destroy this card',
+                },
+            },
+            soe_yellowseal_seal = {
+                name = 'Yellow Seal',
+                text = {
+                    'This card is returned to hand',
+                    'after scoring',
                 },
             },
             red_seal_joker = {
@@ -522,6 +538,7 @@ return {
             soe_negativeseal_seal = 'Negative Seal',
             soe_carmineseal_seal = 'Carmine Seal',
             soe_aquaseal_seal = 'Aqua Seal',
+            soe_yellowseal_seal = 'Yellow Seal',
 
             k_soe_infinity = "Infinity",
         },

@@ -5,44 +5,6 @@ priority = 1
 
 [[patches]]
 [patches.pattern]
-target = "functions/UI_definitions.lua"
-pattern = '''
-local card = Card(0,0, 0.5*G.CARD_W, 0.5*G.CARD_H, G.P_CARDS[v[1]], G.P_CENTERS[v[3] or 'c_base'])
-'''
-position = "after"
-payload = '''
-if v.enhancement then
-    if G.P_CENTERS[v.enhancement] then
-        card:set_ability(G.P_CENTERS[v.enhancement])
-    else
-        card:set_ability(G.P_CENTERS["m_soe_j_joker"])
-    end
-end
-'''
-match_indent = true
-times = 1
-
-[[patches]]
-[patches.pattern]
-target = "functions/UI_definitions.lua"
-pattern = '''
-local card = Card(0,0, 0.5*G.CARD_W, 0.5*G.CARD_H, G.P_CARDS[v[1]], G.P_CENTERS.c_base)
-'''
-position = "after"
-payload = '''
-if v.enhancement then
-    if G.P_CENTERS[v.enhancement] then
-        card:set_ability(G.P_CENTERS[v.enhancement])
-    else
-        card:set_ability(G.P_CENTERS["m_soe_j_joker"])
-    end
-end
-'''
-match_indent = true
-times = 1
-
-[[patches]]
-[patches.pattern]
 target = "functions/button_callbacks.lua"
 pattern = "if #G.hand.highlighted <= 0 or G.GAME.blind.block_play or #G.hand.highlighted > 5 then"
 position = "at"
@@ -77,13 +39,14 @@ G.vouchers:emplace(card_to_save)
 '''
 position = "at"
 payload = '''
+local card_to_save
 if not isblueprint then
-    local card_to_save = self and copy_card(self) or Card(0, 0, G.CARD_W, G.CARD_H, G.P_CARDS.empty, center)
+    card_to_save = self and copy_card(self) or Card(0, 0, G.CARD_W, G.CARD_H, G.P_CARDS.empty, center)
     card_to_save.VT.x, card_to_save.VT.y = G.vouchers.T.x, G.vouchers.T.y
     card_to_save.ability.extra = self and self.ability.extra or card_to_save.ability.extra
     G.vouchers:emplace(card_to_save)
 else
-    local card_to_save = self
+    card_to_save = self
 end
 '''
 overwrite = true
@@ -131,7 +94,7 @@ context.other_card = card
 '''
 position = "after"
 payload = '''
-SMODS.calculate_context({individual = true, other_card = card})
+SEALS.nojokercalculate({individual = true, other_card = card, cardarea = card.area})
 '''
 match_indent = true
 
@@ -145,6 +108,65 @@ context.other_card = card
 '''
 position = "after"
 payload = '''
-SMODS.calculate_context({individual = true, other_card = card})
+SEALS.nojokercalculate({individual = true, other_card = card, end_of_round = true})
 '''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "card.lua"
+pattern = '''
+if self.ability.name == 'Joker' then
+    return {
+        message = localize{type='variable',key='a_mult',vars={self.ability.mult}},
+        mult_mod = self.ability.mult
+    }
+'''
+position = "at"
+payload = '''
+if self.ability.name == 'Joker' then
+    if SEALS.find_mod("YGGDRASIL") then
+        return {
+            mult = self.ability.extra.mult <= 0 and nil or self.ability.extra.mult,
+            chips = self.ability.extra.chips <= 0 and nil or self.ability.extra.chips,
+            xmult = self.ability.extra.xmult <= 1 and nil or self.ability.extra.xmult,
+        }
+    else
+        return {
+            message = localize{type='variable',key='a_mult',vars={self.ability.mult}},
+            mult_mod = self.ability.mult
+        }
+    end
+'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = '''functions/state_events.lua'''
+pattern = '''
+for k, v in ipairs(G.play.cards) do
+    if (not v.shattered) and (not v.destroyed) then 
+        draw_card(G.play,G.discard, it*100/play_count,'down', false, v)
+        it = it + 1
+    end
+end
+'''
+position = "at"
+payload = '''
+local yellowsealers = {}
+for k, v in ipairs(G.play.cards) do
+    if (not v.shattered) and (not v.destroyed) and not SEALS.has_seal(v, "soe_yellowseal") then 
+        draw_card(G.play,G.discard, it*100/play_count,'down', false, v)
+        it = it + 1
+    end
+    if (not v.shattered) and (not v.destroyed) and SEALS.has_seal(v, "soe_yellowseal") then
+        table.insert(yellowsealers, v)
+        it = it + 1
+    end
+end
+if #yellowsealers > 0 then
+    G.FUNCS.draw_from_play_to_hand(yellowsealers)
+end
+'''
+overwrite = true
 match_indent = true
