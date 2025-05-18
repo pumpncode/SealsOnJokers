@@ -3895,7 +3895,7 @@ if cryptidyeohna then
         atlas = 'Think',
         pos = {x = 0, y = 0},
         soul_pos = {x = 1, y = 0},
-        config = {extra = {emult_mod = 0.2, idea_count = 18}},
+        config = {extra = {emult_mod = 0.2, idea_count = 19}},
         rarity = "cry_exotic",
         cost = 62,
         unlocked = true,
