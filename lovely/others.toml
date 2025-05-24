@@ -170,3 +170,19 @@ end
 '''
 overwrite = true
 match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "engine/sprite.lua"
+pattern = '''
+self.sprite = love.graphics.newQuad( 
+    self.sprite_pos.x*self.atlas.px,
+    self.sprite_pos.y*self.atlas.py,
+    self.scale.x,
+    self.scale.y, self.atlas.image:getDimensions())
+'''
+position = "before"
+payload = '''
+self.atlas = self.atlas or G.ASSET_ATLAS["Joker"]
+'''
+match_indent = true
