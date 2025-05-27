@@ -3735,7 +3735,7 @@ for k, v in pairs(G.P_CENTERS) do
     if v.set == 'Planet' and v.config.hand_type then
         SMODS.Joker{
             key = v.key .. 'joker',
-            atlas = v.atlas or 'Tarots',
+            atlas = 'Tarots',
             pos = v.pos,
             rarity = 3,
             loc_txt = {
